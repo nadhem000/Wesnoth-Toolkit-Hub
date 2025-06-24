@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>.po File Dictionary Extractor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        select, button {
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #fileInput {
+            margin-bottom: 10px;
+        }
+        #dictionaryOutput {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+            background-color: white;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .entry {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .msgid {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .msgstr {
+            color: #27ae60;
+        }
+        .error {
+            color: #e74c3c;
+        }
+        .success {
+            color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <h1>.po File Dictionary Extractor</h1>
+    
+    <div class="container">
+        <h2>Input .po Files</h2>
+        <div>
+            <input type="file" id="fileInput" multiple accept=".po">
+            <p>or paste .po content here:</p>
+            <textarea id="poContent" placeholder="Paste .po file content here..."></textarea>
+        </div>
+        
+        <div>
+            <label for="language">Target Language:</label>
+            <select id="language">
+                <option value="en">English</option>
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+                <option value="it">Italian</option>
+                <option value="pt">Portuguese</option>
+                <option value="ru">Russian</option>
+                <option value="zh">Chinese</option>
+                <option value="ja">Japanese</option>
+                <option value="ar">Arabic</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+        
+        <div>
+            <label for="wordCount">Extract by word count in msgid:</label>
+            <select id="wordCount">
+                <option value="1">Single word only</option>
+                <option value="2">Two words only</option>
+                <option value="both">Both single and two words</option>
+            </select>
+        </div>
+        
+        <button id="processBtn">Process Files</button>
+        <button id="downloadBtn" disabled>Download Dictionary</button>
+        <button id="uploadDictBtn">Upload Dictionary</button>
+        <input type="file" id="dictUploadInput" accept=".json" style="display: none;">
+        
+        <div id="status"></div>
+    </div>
+    
+    <div class="container">
+        <h2>Dictionary Output</h2>
+        <div id="dictionaryOutput">
+            <p>Processed dictionary entries will appear here...</p>
+        </div>
+    </div>
+    
+    <script>
+        let dictionary = {};
+        let currentLanguage = 'en';
+        
+        // DOM elements
+        const fileInput = document.getElementById('fileInput');
+        const poContent = document.getElementById('poContent');
+        const languageSelect = document.getElementById('language');
+        const wordCountSelect = document.getElementById('wordCount');
+        const processBtn = document.getElementById('processBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const uploadDictBtn = document.getElementById('uploadDictBtn');
+        const dictUploadInput = document.getElementById('dictUploadInput');
+        const dictionaryOutput = document.getElementById('dictionaryOutput');
+        const statusDiv = document.getElementById('status');
+        
+        // Event listeners
+        processBtn.addEventListener('click', processFiles);
+        downloadBtn.addEventListener('click', downloadDictionary);
+        uploadDictBtn.addEventListener('click', () => dictUploadInput.click());
+        dictUploadInput.addEventListener('change', handleDictionaryUpload);
+        languageSelect.addEventListener('change', (e) => {
+            currentLanguage = e.target.value;
+        });
+        
+        function processFiles() {
+            const files = fileInput.files;
+            const content = poContent.value.trim();
+            
+            if (files.length === 0 && content === '') {
+                showStatus('Please upload or paste .po file content', 'error');
+                return;
+            }
+            
+            dictionary = {}; // Reset dictionary
+            
+            // Process uploaded files
+            if (files.length > 0) {
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    if (!file.name.endsWith('.po')) {
+                        showStatus(`Skipping non-.po file: ${file.name}`, 'error');
+                        continue;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        parsePoContent(e.target.result, file.name);
+                        if (i === files.length - 1 && content === '') {
+                            finishProcessing();
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            }
+            
+            // Process pasted content
+            if (content !== '') {
+                parsePoContent(content, 'pasted-content.po');
+                finishProcessing();
+            }
+        }
+        
+        function parsePoContent(content, filename) {
+            const lines = content.split('\n');
+            let currentMsgid = '';
+            let currentMsgidPlural = '';
+            let currentMsgstr = '';
+            let currentMsgstrPlural = {};
+            let inMsgstr = false;
+            let inMsgstrPlural = false;
+            let pluralIndex = 0;
+            
+            for (let line of lines) {
+                line = line.trim();
+                
+                if (line.startsWith('msgid "')) {
+                    // New message starts
+                    if (currentMsgid && currentMsgstr) {
+                        addToDictionaryIfMatchesWordCount(currentMsgid, currentMsgstr);
+                    }
+                    
+                    // Reset state
+                    currentMsgid = extractQuotedContent(line);
+                    currentMsgstr = '';
+                    inMsgstr = false;
+                    inMsgstrPlural = false;
+                }
+                else if (line.startsWith('msgid_plural "')) {
+                    currentMsgidPlural = extractQuotedContent(line);
+                    currentMsgstrPlural = {};
+                    inMsgstrPlural = true;
+                }
+                else if (line.startsWith('msgstr "')) {
+                    inMsgstr = true;
+                    inMsgstrPlural = false;
+                    currentMsgstr = extractQuotedContent(line);
+                }
+                else if (line.startsWith('msgstr[')) {
+                    inMsgstr = false;
+                    inMsgstrPlural = true;
+                    const bracketIndex = line.indexOf(']');
+                    pluralIndex = parseInt(line.substring(7, bracketIndex));
+                    currentMsgstrPlural[pluralIndex] = extractQuotedContent(line);
+                }
+                else if ((inMsgstr || inMsgstrPlural) && line.startsWith('"') && line.endsWith('"')) {
+                    const content = extractQuotedContent(line);
+                    if (inMsgstr) {
+                        currentMsgstr += content;
+                    } else if (inMsgstrPlural) {
+                        currentMsgstrPlural[pluralIndex] += content;
+                    }
+                }
+            }
+            
+            // Add the last message if any
+            if (currentMsgid && currentMsgstr) {
+                addToDictionaryIfMatchesWordCount(currentMsgid, currentMsgstr);
+            }
+            
+            // Add plural forms if any
+            if (currentMsgidPlural && Object.keys(currentMsgstrPlural).length > 0) {
+                for (const [index, translation] of Object.entries(currentMsgstrPlural)) {
+                    const pluralKey = `${currentMsgid} | ${currentMsgidPlural} [${index}]`;
+                    addToDictionaryIfMatchesWordCount(pluralKey, translation);
+                }
+            }
+            
+            showStatus(`Processed: ${filename}`, 'success');
+        }
+        
+        function addToDictionaryIfMatchesWordCount(key, value) {
+            if (!key || !value) return;
+            
+            // Clean up key and value (remove escaped characters)
+            key = key.replace(/\\"/g, '"').replace(/\\n/g, '\n').trim();
+            value = value.replace(/\\"/g, '"').replace(/\\n/g, '\n').trim();
+            
+            if (!key || !value) return;
+            
+            // Count words in the key (msgid)
+            const words = key.split(/\s+/).filter(word => word.length > 0);
+            const wordCount = words.length;
+            
+            // Check if this entry matches our word count criteria
+            const wordCountOption = wordCountSelect.value;
+            if (
+                wordCountOption === 'both' || 
+                (wordCountOption === '1' && wordCount === 1) ||
+                (wordCountOption === '2' && wordCount === 2)
+            ) {
+                dictionary[key] = value;
+            }
+        }
+        
+        function extractQuotedContent(line) {
+            const start = line.indexOf('"') + 1;
+            const end = line.lastIndexOf('"');
+            return line.substring(start, end);
+        }
+        
+        function finishProcessing() {
+            showStatus(`Processing complete. ${Object.keys(dictionary).length} entries extracted.`, 'success');
+            displayDictionary();
+            downloadBtn.disabled = false;
+        }
+        
+        function displayDictionary() {
+            if (Object.keys(dictionary).length === 0) {
+                dictionaryOutput.innerHTML = '<p>No dictionary entries found matching the criteria.</p>';
+                return;
+            }
+            
+            // Sort dictionary alphabetically
+            const sortedKeys = Object.keys(dictionary).sort((a, b) => a.localeCompare(b));
+            
+            let html = '';
+            for (const key of sortedKeys) {
+                html += `
+                    <div class="entry">
+                        <div class="msgid">${escapeHtml(key)} (${key.split(/\s+/).filter(w => w.length > 0).length} word${key.split(/\s+/).filter(w => w.length > 0).length !== 1 ? 's' : ''})</div>
+                        <div class="msgstr">${escapeHtml(dictionary[key])}</div>
+                    </div>
+                `;
+            }
+            
+            dictionaryOutput.innerHTML = html;
+        }
+        
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;")
+                .replace(/\n/g, "<br>");
+        }
+        
+        function downloadDictionary() {
+            if (Object.keys(dictionary).length === 0) {
+                showStatus('Dictionary is empty', 'error');
+                return;
+            }
+            
+            // Add metadata to the dictionary
+            const dictWithMeta = {
+                metadata: {
+                    language: currentLanguage,
+                    wordCount: wordCountSelect.value,
+                    created: new Date().toISOString(),
+                    version: "1.0",
+                    source: "po-file-extractor"
+                },
+                entries: dictionary
+            };
+            
+            const dataStr = JSON.stringify(dictWithMeta, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+            
+            const exportFileName = `dictionary-${currentLanguage}-${wordCountSelect.value}-words-${new Date().toISOString().slice(0,10)}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileName);
+            linkElement.click();
+            
+            showStatus(`Dictionary downloaded as ${exportFileName}`, 'success');
+        }
+        
+        function handleDictionaryUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const uploadedDict = JSON.parse(e.target.result);
+                    
+                    // Check if it's a dictionary file with our expected structure
+                    if (uploadedDict.entries || uploadedDict.metadata) {
+                        if (uploadedDict.entries) {
+                            dictionary = uploadedDict.entries;
+                        } else {
+                            // Handle case where it's just a plain dictionary
+                            dictionary = uploadedDict;
+                        }
+                        
+                        // Update settings from metadata if available
+                        if (uploadedDict.metadata) {
+                            if (uploadedDict.metadata.language) {
+                                currentLanguage = uploadedDict.metadata.language;
+                                languageSelect.value = currentLanguage;
+                            }
+                            if (uploadedDict.metadata.wordCount) {
+                                wordCountSelect.value = uploadedDict.metadata.wordCount;
+                            }
+                        }
+                        
+                        showStatus('Dictionary uploaded successfully', 'success');
+                        displayDictionary();
+                        downloadBtn.disabled = false;
+                    } else {
+                        showStatus('The file does not contain valid dictionary entries', 'error');
+                    }
+                } catch (err) {
+                    showStatus('Error parsing dictionary file', 'error');
+                    console.error(err);
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        function showStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = type;
+        }
+    </script>
+</body>
+</html>

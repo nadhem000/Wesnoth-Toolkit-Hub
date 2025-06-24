@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wesnoth Scenario Story Extractor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a4a, #0d1b2a);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #304d7a;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #4fc3f7;
+            text-shadow: 0 0 10px rgba(79, 195, 247, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #90a4ae;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .input-section {
+            background: rgba(13, 27, 42, 0.8);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid #304d7a;
+        }
+        
+        .input-options {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .input-option {
+            flex: 1;
+            background: rgba(25, 45, 70, 0.7);
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .input-option:hover {
+            background: rgba(35, 65, 100, 0.7);
+            border-color: #4fc3f7;
+            transform: translateY(-5px);
+        }
+        
+        .input-option.active {
+            background: rgba(35, 65, 100, 0.9);
+            border-color: #4fc3f7;
+            box-shadow: 0 0 15px rgba(79, 195, 247, 0.4);
+        }
+        
+        .input-option h3 {
+            color: #4fc3f7;
+            margin-bottom: 10px;
+        }
+        
+        .input-option p {
+            color: #b0bec5;
+            font-size: 0.95rem;
+        }
+        
+        .input-content {
+            display: none;
+        }
+        
+        .input-content.active {
+            display: block;
+        }
+        
+        .file-upload {
+            padding: 20px;
+            background: rgba(25, 45, 70, 0.5);
+            border-radius: 8px;
+            border: 2px dashed #304d7a;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .file-upload input {
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(13, 27, 42, 0.7);
+            border: 1px solid #304d7a;
+            color: #e0e0e0;
+            border-radius: 5px;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            background: rgba(13, 27, 42, 0.7);
+            border: 1px solid #304d7a;
+            color: #e0e0e0;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #1976d2;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn:hover {
+            background: #2196f3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-secondary {
+            background: #455a64;
+        }
+        
+        .btn-secondary:hover {
+            background: #546e7a;
+        }
+        
+        .output-section {
+            display: none;
+        }
+        
+        .output-section.active {
+            display: block;
+        }
+        
+        .scenario-card {
+            background: rgba(13, 27, 42, 0.8);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid #304d7a;
+        }
+        
+        .scenario-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #304d7a;
+        }
+        
+        .scenario-title {
+            font-size: 1.8rem;
+            color: #4fc3f7;
+        }
+        
+        .scenario-id {
+            background: rgba(25, 45, 70, 0.7);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            color: #90a4ae;
+        }
+        
+        .scenario-content {
+            margin-top: 20px;
+        }
+        
+        .story-section, .dialogue-section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 1.4rem;
+            color: #81d4fa;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #304d7a;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            margin-right: 10px;
+            color: #4fc3f7;
+        }
+        
+        .story-part {
+            background: rgba(25, 45, 70, 0.5);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
+            border-left: 4px solid #4fc3f7;
+        }
+        
+        .story-part:before {
+            content: """;
+            position: absolute;
+            top: -20px;
+            left: 10px;
+            font-size: 80px;
+            color: rgba(79, 195, 247, 0.1);
+            font-family: serif;
+            line-height: 1;
+        }
+        
+        .dialogue-entry {
+            background: rgba(25, 45, 70, 0.5);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #81c784;
+        }
+        
+        .speaker {
+            font-weight: bold;
+            color: #81d4fa;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .speaker:before {
+            content: "🗨️";
+            margin-right: 8px;
+        }
+        
+        .message {
+            padding-left: 25px;
+            color: #e0e0e0;
+            font-style: italic;
+        }
+        
+        .event-name {
+            font-size: 0.9rem;
+            color: #a5d6a7;
+            margin-top: 8px;
+            opacity: 0.8;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #90a4ae;
+            background: rgba(25, 45, 70, 0.3);
+            border-radius: 8px;
+            border: 1px dashed #304d7a;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 5px;
+            background: #2e7d32;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transform: translateX(200%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.error {
+            background: #c62828;
+        }
+        /* how-to-use section */
+        .how-to-use {
+            background: rgba(25, 45, 70, 0.5);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 0 auto 30px;
+            max-width: 800px;
+            border: 1px solid #304d7a;
+        }
+        
+        .how-to-use h3 {
+            color: #4fc3f7;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .how-to-use ul {
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .how-to-use li {
+            margin-bottom: 8px;
+            color: #b0bec5;
+        }
+        /* formatted story text */
+        .story-text {
+            white-space: pre-wrap;
+            line-height: 1.8;
+        }
+        /* event grouping */
+        .event-group {
+            margin-bottom: 25px;
+            border-left: 3px solid #81d4fa;
+            padding-left: 15px;
+        }
+        
+        .event-title {
+            font-size: 1.2rem;
+            color: #81d4fa;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .event-title:before {
+            content: "📅";
+            margin-right: 10px;
+        }
+.event-filter {
+    background: rgba(40, 60, 85, 0.4);
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9rem;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    border-left: 2px solid #546e7a;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+        /* nested conditions */
+        .condition-group {
+            margin-left: 20px;
+            margin-bottom: 15px;
+            border-left: 2px solid #546e7a;
+            padding-left: 15px;
+        }
+        
+        .condition-header {
+            font-weight: bold;
+            color: #81d4fa;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .condition-header:before {
+            content: "↳";
+            margin-right: 8px;
+            font-size: 1.2rem;
+        }
+        
+        .condition-content {
+            background: rgba(30, 50, 70, 0.4);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        .message-container {
+            margin-left: 20px;
+        }
+
+.event-group {
+    margin-bottom: 30px;
+    border-left: 3px solid #81d4fa;
+    padding-left: 15px;
+    background: rgba(25, 45, 70, 0.3);
+    padding: 15px;
+    border-radius: 5px;
+}
+    .condition-block {
+    background: rgba(30, 50, 70, 0.4);
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin: 5px 0;
+    font-family: monospace;
+    font-size: 0.9rem;
+    border-left: 2px solid #546e7a;
+    white-space: pre-wrap;
+    word-break: break-all;
+}    
+        @media (max-width: 768px) {
+            .input-options {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .scenario-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .scenario-id {
+                margin-top: 10px;
+            }
+        }
+        
+        /* Added for condition display */
+        .condition-block pre {
+            margin: 0;
+            padding: 0;
+            font-family: monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+        }
+        
+        .condition-parts {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .condition-part {
+            padding: 8px;
+            border-radius: 4px;
+            background: rgba(40, 60, 85, 0.3);
+        }
+        
+        .condition-part-header {
+            font-weight: bold;
+            color: #81d4fa;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .condition-part-header:before {
+            content: "↳";
+            margin-right: 5px;
+        }
+        
+        .event-count {
+            background: rgba(79, 195, 247, 0.1);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Wesnoth Scenario Story Extractor</h1>
+            <p class="subtitle">Upload or paste .cfg scenario files to extract and organize story content, character dialogues, and scenario information from Wesnoth campaigns</p>
+        </header>
+        
+        <!-- How to Use Section -->
+        <div class="how-to-use">
+            <h3>How to Use This Tool</h3>
+            <ul>
+                <li><strong>Upload Files</strong>: Select .cfg scenario files from your computer</li>
+                <li><strong>Paste Content</strong>: Copy and paste scenario file contents directly</li>
+                <li>Click "Extract Story Content" to process the files</li>
+                <li>Story text will be formatted with proper sentence breaks</li>
+                <li>Dialogues are grouped by event name with speaker information</li>
+                <li>Use the "Back to Input" button to analyze more scenarios</li>
+            </ul>
+            <p>Note: This tool extracts story parts from [story] tags and dialogues from [message] tags within [event] sections.</p>
+        </div>
+        <section class="input-section">
+            <div class="input-options">
+                <div class="input-option active" data-target="upload">
+                    <h3>Upload Files</h3>
+                    <p>Select one or multiple .cfg scenario files from your computer</p>
+                </div>
+                <div class="input-option" data-target="paste">
+                    <h3>Paste Content</h3>
+                    <p>Copy and paste the content of your .cfg scenario file directly</p>
+                </div>
+            </div>
+            
+            <div class="input-content active" id="upload-content">
+                <div class="file-upload">
+                    <h3>Select Scenario Files</h3>
+                    <p>Choose .cfg files to extract story and dialogue content</p>
+                    <input type="file" id="file-input" accept=".cfg" multiple>
+                </div>
+                <div class="controls">
+                    <button class="btn" id="process-btn">Extract Story Content</button>
+                    <button class="btn btn-secondary" id="reset-btn">Reset</button>
+                </div>
+            </div>
+            
+            <div class="input-content" id="paste-content">
+                <textarea id="paste-input" placeholder="Paste the content of your .cfg scenario file here..."></textarea>
+                <div class="controls">
+                    <button class="btn" id="paste-process-btn">Extract Story Content</button>
+                    <button class="btn btn-secondary" id="paste-reset-btn">Clear</button>
+                </div>
+            </div>
+        </section>
+        
+        <section class="output-section" id="output-section">
+            <div id="output-content"></div>
+            <div class="controls">
+                <button class="btn btn-secondary" id="back-btn">Back to Input</button>
+            </div>
+        </section>
+    </div>
+    
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // DOM Elements
+        const inputOptions = document.querySelectorAll('.input-option');
+        const inputContents = document.querySelectorAll('.input-content');
+        const fileInput = document.getElementById('file-input');
+        const processBtn = document.getElementById('process-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const pasteInput = document.getElementById('paste-input');
+        const pasteProcessBtn = document.getElementById('paste-process-btn');
+        const pasteResetBtn = document.getElementById('paste-reset-btn');
+        const outputSection = document.getElementById('output-section');
+        const outputContent = document.getElementById('output-content');
+        const backBtn = document.getElementById('back-btn');
+        const notification = document.getElementById('notification');
+        
+        // Current state
+        let currentInputMethod = 'upload';
+        let extractedData = [];
+        
+        // Event Listeners
+        inputOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                const target = option.dataset.target;
+                
+                // Update active option
+                inputOptions.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                
+                // Update active content
+                inputContents.forEach(content => content.classList.remove('active'));
+                document.getElementById(`${target}-content`).classList.add('active');
+                
+                currentInputMethod = target;
+            });
+        });
+        
+        processBtn.addEventListener('click', processFiles);
+        resetBtn.addEventListener('click', resetInput);
+        pasteProcessBtn.addEventListener('click', processPastedContent);
+        pasteResetBtn.addEventListener('click', () => {
+            pasteInput.value = '';
+        });
+        backBtn.addEventListener('click', () => {
+            outputSection.classList.remove('active');
+        });
+        
+        // Functions
+        function showNotification(message, isError = false) {
+            notification.textContent = message;
+            notification.className = 'notification';
+            
+            if (isError) {
+                notification.classList.add('error');
+            }
+            
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        function resetInput() {
+            fileInput.value = '';
+        }
+        
+        function processFiles() {
+            const files = fileInput.files;
+            
+            if (files.length === 0) {
+                showNotification('Please select at least one file', true);
+                return;
+            }
+            
+            extractedData = [];
+            const promises = [];
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const promise = new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const content = e.target.result;
+                        const scenarioData = parseScenario(content, file.name);
+                        extractedData.push(scenarioData);
+                        resolve();
+                    };
+                    reader.readAsText(file);
+                });
+                promises.push(promise);
+            }
+            
+            Promise.all(promises).then(() => {
+                displayResults();
+                outputSection.classList.add('active');
+                showNotification(`Successfully extracted ${files.length} scenario(s)`);
+            });
+        }
+        
+        function processPastedContent() {
+            const content = pasteInput.value.trim();
+            
+            if (content === '') {
+                showNotification('Please paste some content first', true);
+                return;
+            }
+            
+            extractedData = [parseScenario(content, 'Pasted Scenario')];
+            displayResults();
+            outputSection.classList.add('active');
+            showNotification('Content extracted successfully');
+        }
+        
+        
+        function parseScenario(content, fileName) {
+            const scenario = {
+                fileName: fileName,
+                id: '',
+                name: '',
+                nextScenario: '',
+                storyParts: [],
+                events: []  // Changed to array to handle multiple events with same name
+            };
+
+            // Helper function to extract values
+            const extractValue = (regex, str) => {
+                const match = regex.exec(str);
+                if (!match) return '';
+                const value = match[1] || match[2] || match[3] || '';
+                return value.split('#')[0].trim();
+            };
+
+            // Extract scenario metadata
+            scenario.id = extractValue(/id\s*=\s*(?:"([^"]*)"|'([^']*)'|([^#\r\n]+[^\s#]*))/, content);
+            scenario.name = extractValue(/name\s*=\s*(?:"([^"]*)"|'([^']*)'|([^#\r\n]+[^\s#]*))/, content);
+            scenario.nextScenario = extractValue(/next_scenario\s*=\s*(?:"([^"]*)"|'([^']*)'|([^#\r\n]+[^\s#]*))/, content);
+
+            // Extract story parts 
+            const storyRegex = /\[story\][\s\S]*?\[\/story\]/g;
+            const storyMatch = storyRegex.exec(content);
+            if (storyMatch) {
+                const storyContent = storyMatch[0];
+                const partRegex = /\[part\][\s\S]*?story\s*=\s*_?\s*"([^"]*)"[\s\S]*?\[\/part\]/g;
+                let partMatch;
+                while ((partMatch = partRegex.exec(storyContent)) !== null) {
+                    scenario.storyParts.push(partMatch[1]);
+                }
+            }
+
+            // Extract events and messages
+            const eventRegex = /\[event\][\s\S]*?\[\/event\]/g;
+            let eventMatch;
+            
+            while ((eventMatch = eventRegex.exec(content)) !== null) {
+                const eventContent = eventMatch[0];
+                const eventName = extractValue(/name\s*=\s*(?:"([^"]*)"|'([^']*)'|([^#\r\n]+.*?))(?=[\s#]|\r|\n|$)/, eventContent) || 'unnamed';
+                
+                // Extract filters
+                const filterTypes = ['filter', 'filter_second', 'filter_side', 'filter_location'];
+                const allFilters = [];
+
+                for (const filterType of filterTypes) {
+                    const filterRegex = new RegExp(`\\[${filterType}\\]([\\s\\S]*?)\\[\\/${filterType}\\]`, 'gi');
+                    let filterMatch;
+                    while ((filterMatch = filterRegex.exec(eventContent)) !== null) {
+                        let filterContent = filterMatch[1];
+                        // Remove comments but preserve structure
+                        filterContent = filterContent.replace(/#.*$/gm, '');
+                        // Remove extra whitespace and format
+                        filterContent = filterContent
+                            .split('\n')
+                            .map(line => line.trim())
+                            .filter(line => line)
+                            .join('\n');
+                            
+                        allFilters.push(`${filterType}:\n${filterContent}`);
+                    }
+                }
+
+                const filterSummary = allFilters.length > 0 ? 
+                    allFilters.join('\n\n') : 
+                    'no filter';
+                
+                // NEW: Check if event contains any messages
+                const hasMessages = /\[message\]/.test(eventContent);
+                if (!hasMessages) continue;  // Skip events without messages
+                
+                // Parse messages with conditions
+                function parseEventContent(content) {
+                    const result = [];
+                    const tagPattern = /\[(\/?)(\w+)\]/g;
+                    let match;
+                    let lastIndex = 0;
+                    
+                    while ((match = tagPattern.exec(content)) !== null) {
+                        const fullTag = match[0];
+                        const isClosing = match[1] === '/';
+                        const tagName = match[2].toLowerCase();
+                        
+                        // Handle condition tags
+                        if (['if', 'then', 'else', 'elseif'].includes(tagName) && !isClosing) {
+                            // Find closing tag
+                            const closingTag = `[/${tagName}]`;
+                            const endIndex = content.indexOf(closingTag, match.index);
+                            
+                            if (endIndex !== -1) {
+                                const innerContent = content.substring(match.index + fullTag.length, endIndex);
+                                const children = parseEventContent(innerContent);
+                                
+                                // Extract only the condition content without outer tags
+                                const conditionContent = innerContent;
+                                
+                                result.push({
+                                    type: 'condition',
+                                    tag: tagName,
+                                    content: conditionContent,
+                                    children: children
+                                });
+                                
+                                // Skip to end of condition block
+                                tagPattern.lastIndex = endIndex + closingTag.length;
+                                lastIndex = tagPattern.lastIndex;
+                            }
+                        }
+                        // Handle messages
+                        else if (tagName === 'message' && !isClosing) {
+                            const endIndex = content.indexOf('[/message]', match.index);
+                            if (endIndex !== -1) {
+                                const messageContent = content.substring(match.index, endIndex + 10);
+                                const speaker = extractValue(/speaker\s*=\s*(?:"([^"]*)"|'([^']*)'|([^#\r\n]+.*?))(?=[\s#]|\r|\n|$)/i, messageContent) || 'narrator';
+                                const messageTextMatch = /message\s*=\s*_?\s*"([^"]*)"/.exec(messageContent);
+                                
+                                if (messageTextMatch) {
+                                    result.push({
+                                        type: 'message',
+                                        speaker: speaker,
+                                        text: messageTextMatch[1]
+                                    });
+                                }
+                                
+                                // Skip to end of message
+                                tagPattern.lastIndex = endIndex + 10;
+                                lastIndex = tagPattern.lastIndex;
+                            }
+                        }
+                        // Handle other content between tags
+                        else if (match.index > lastIndex) {
+                            const textContent = content.substring(lastIndex, match.index).trim();
+                            if (textContent) {
+                                result.push({
+                                    type: 'text',
+                                    content: textContent
+                                });
+                            }
+                            lastIndex = match.index;
+                        }
+                    }
+                    
+                    return result;
+                }
+                
+                const messages = parseEventContent(eventContent);
+                
+                // Push event to array (instead of object) to handle multiple with same name
+                scenario.events.push({
+                    name: eventName,
+                    filters: filterSummary,
+                    messages: messages
+                });
+            }
+            
+            return scenario;
+        }
+        
+        function displayResults() {
+            outputContent.innerHTML = '';
+            
+            if (extractedData.length === 0) {
+                outputContent.innerHTML = `
+                    <div class="empty-state">
+                        <div>📭</div>
+                        <h3>No scenarios to display</h3>
+                        <p>Try uploading or pasting some scenario files</p>
+                    </div>
+                `;
+                return;
+            }
+
+            extractedData.forEach(scenario => {
+                const scenarioElement = document.createElement('div');
+                scenarioElement.className = 'scenario-card';
+                
+                // Prepare events HTML
+                let eventsHTML = '';
+                
+                // Loop through events array instead of object
+                scenario.events.forEach((event, index) => {
+                    const { name, filters, messages } = event;
+                    
+                    // Recursive function to render condition hierarchy
+                    function renderMessages(messages) {
+                        let html = '';
+                        messages.forEach(entry => {
+                            if (entry.type === 'message') {
+                                html += `
+                                    <div class="dialogue-entry">
+                                        <div class="speaker">${entry.speaker}</div>
+                                        <div class="message">${entry.text}</div>
+                                    </div>
+                                `;
+                            }
+                            else if (entry.type === 'condition') {
+                                const childrenHTML = renderMessages(entry.children);
+                                
+                                // Format condition content without outer tags
+                                const conditionContent = entry.content
+                                    .replace(/^[\n\s]+|[\n\s]+$/g, '') // Trim whitespace
+                                    .split('\n')
+                                    .map(line => line.trim())
+                                    .filter(line => line)
+                                    .join('\n');
+                                
+                                html += `
+                                    <div class="condition-group">
+                                        <div class="condition-header">${entry.tag.toUpperCase()}</div>
+                                        <div class="condition-content"><pre>${conditionContent}</pre></div>
+                                        <div class="message-container">
+                                            ${childrenHTML}
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        });
+                        return html;
+                    }
+                    
+                    const eventEntriesHTML = renderMessages(messages);
+                    
+                    if (eventEntriesHTML) {
+                        eventsHTML += `
+                            <div class="event-group">
+                                <h3 class="event-title">${name} <span class="event-count">#${index+1}</span></h3>
+                                <div class="event-filter"><pre>${filters}</pre></div>
+                                <div class="message-container">
+                                    ${eventEntriesHTML}
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                // Build scenario content
+                scenarioElement.innerHTML = `
+                    <div class="scenario-header">
+                        <div>
+                            <h2 class="scenario-title">${scenario.name || 'Unnamed Scenario'}</h2>
+                            <div class="scenario-id">ID: ${scenario.id || 'N/A'}</div>
+                        </div>
+                        <div>
+                            <div>File: ${scenario.fileName}</div>
+                            ${scenario.nextScenario ? `<div>Next Scenario: ${scenario.nextScenario}</div>` : ''}
+                            <div>Events: ${scenario.events.length}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="scenario-content">
+                        ${scenario.storyParts.length > 0 ? `
+                            <div class="story-section">
+                                <h3 class="section-title">📖 Story</h3>
+                                ${scenario.storyParts.map(part => `
+                                    <div class="story-part">
+                                        <p class="story-text">${part}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                        
+                        ${eventsHTML ? `
+                            <div class="dialogue-section">
+                                <h3 class="section-title">💬 Dialogue Events</h3>
+                                ${eventsHTML}
+                            </div>
+                        ` : `
+                            <div class="empty-state">
+                                <div>🔇</div>
+                                <p>No dialogue events found in this scenario</p>
+                            </div>
+                        `}
+                    </div>
+                `;
+                
+                outputContent.appendChild(scenarioElement);
+            });
+        }
+        
+        // Initialize with sample data for demonstration
+        window.onload = function() {
+            // For demo purposes, we'll simulate having a scenario
+            const sampleContent = `[scenario]
+    id="RV_P01_S01"
+    name="CotDQ-01-The Attack"
+    next_scenario=RV_P01_S02
+    [story]
+        [part]
+            story= _ "Long have we been shackled by those who deem themselves superior. Among my kin, the Faltharim, only the Muniriki extend a hand of equality."
+        [/part]
+        [part]
+            story= _ "For ages, I have longed for true freedom; a time when my power would match that of my mother, Melbrina of Gertan."
+        [/part]
+    [/story]
+    [event]
+        name=start
+        [message]
+            speaker=Alanya
+            message= _ "Jetrin, please! I wish to fight alongside you and your warriors! There must be a way I can help!"
+        [/message]
+        [message]
+            speaker=Jetrin
+            message= _ "Alanya, your heart is fierce, but this battle is not for you. Stay behind. Your magic should not be wasted on the fray."
+        [/message]
+    [/event]
+    [event]
+        name=moveto
+        first_time_only=yes
+        [filter]
+            side=1
+            x=21
+            y=24
+        [/filter]
+        [set_variable]
+            name=got_Myrrendi
+            value=1
+        [/set_variable]
+        [remove_item]
+            x=$x1
+            y=$y1
+        [/remove_item]
+        {VARIABLE_OP ingredients add 1}
+        [message]
+            speaker=narrator
+            image=portraits/other/wt_books.png
+            message= _ "Myrrendi, the silky blooms that flourish beneath the shallow river waters, radiant as moonlight. Its essence mingles with the currents, bestowing calm upon those racked by pain."
+        [/message]
+        [message]
+            speaker=narrator
+            image=portraits/other/wt_books.png
+            message= _ "Ingrediences: $ingredients| out of 05 ingredients."
+        [/message]
+        [if]
+            [variable]
+                name=ingredients
+                numerical_equals=5
+            [/variable]
+            [then]
+                [message]
+                    speaker=narrator
+                    image=portraits/other/wt_books.png
+                    message= _ "You need to move to the fire to make the potion!"
+                [/message]
+            [/then]
+        [/if]
+    [/event]
+[/scenario]`;
+            
+            const sampleScenario = parseScenario(sampleContent, 'Sample Scenario');
+            extractedData = [sampleScenario];
+        };
+    </script>
+</body>
+</html>
