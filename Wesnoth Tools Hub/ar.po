@@ -1,0 +1,361 @@
+# Arabic translations for Battle for Wesnoth package.
+# Copyright (C) 2008 Wesnoth development team
+# This file is distributed under the same license as the Battle for Wesnoth package.
+# Automatically generated, 2008.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Battle for Wesnoth 1.4.2+dev\n"
+"Report-Msgid-Bugs-To: https://bugs.wesnoth.org/\n"
+"POT-Creation-Date: 2025-05-20 17:31-0500\n"
+"PO-Revision-Date: 2025-06-23 09:58+0100\n"
+"Last-Translator: Mejri Ziad <nouveau.dep@gmail.com>\n"
+"Language-Team: none\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural= n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && "
+"n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
+"X-Generator: Poedit 3.5\n"
+
+#. [time]: id=underground
+#. [editor_times]: id=underground
+#: data/campaigns/Heir_To_The_Throne/utils/httt_utils.cfg:500
+#: data/core/editor/time-of-day.cfg:41 data/core/macros/schedules.cfg:113
+msgid "Underground"
+msgstr "تحت الأرض"
+
+#. [label]
+#. [trait]: id=undead
+#: data/campaigns/Secrets_of_the_Ancients/gui/zombie_recruit_dialog.cfg:183
+#: data/core/macros/traits.cfg:55
+msgid "undead"
+msgstr "ميت-حي"
+
+#. TRANSLATORS: $types is a conjunct list, typical values will be "Castle" or "Flat and Shallow Water".
+#. The terrain names will be hypertext links to the help page of the corresponding terrain type.
+#. There will always be at least 1 item in the list, but unlikely to be more than 3.
+#: src/help/help_topic_generators.cpp:267
+msgid "Basic terrain type: $types"
+msgid_plural "Basic terrain types: $types"
+msgstr[0] "نوع الارضية الأساس: $types"
+msgstr[1] "نوع الارضية الأساس: $types"
+msgstr[2] "نوعا الارضيتان الأساس: $types"
+msgstr[3] "أنواع الارضية الأساس: $types"
+msgstr[4] "أنواع الارضية الأساس: $types"
+msgstr[5] "أنواع الارضية الأساس: $types"
+
+#. TRANSLATORS: In the help for a terrain type, for example Dwarven Village is often placed on Cave Floor
+#: src/help/help_topic_generators.cpp:276
+msgid "Typical base terrain: $type"
+msgstr "التضاريس الأساسية النموذجية: $type"
+
+#: src/help/help_topic_generators.cpp:282
+msgid "Movement properties: "
+msgstr "خصائص الحركة: "
+
+#: src/help/help_topic_generators.cpp:286
+msgid "Defense properties: "
+msgstr "خصائص الدفاع: "
+
+#: src/help/help_topic_generators.cpp:364
+msgid "Level"
+msgstr "المستوى"
+
+#: src/help/help_topic_generators.cpp:415
+#, fuzzy
+#| msgid "Advances from: "
+msgid "Advances from:"
+msgstr "يتطور من: "
+
+#: src/help/help_topic_generators.cpp:417
+#, fuzzy
+#| msgid "Advances to: "
+msgid "Advances to:"
+msgstr "يتطور إلى: "
+
+#: src/help/help_topic_generators.cpp:447
+#, fuzzy
+#| msgid "Base unit: "
+msgid "Base unit:"
+msgstr "الوحدة الأساس: "
+
+#: src/help/help_topic_generators.cpp:452
+#, fuzzy
+#| msgid "Base units: "
+msgid "Base units:"
+msgstr "الوحدات الأساس: "
+
+#: src/help/help_topic_generators.cpp:470
+#, fuzzy
+#| msgid "Variations: "
+msgid "Variations:"
+msgstr "التنويعات: "
+
+#: src/help/help_topic_generators.cpp:497
+msgid "race^Miscellaneous"
+msgstr "متنوعة"
+
+#: src/help/help_topic_generators.cpp:499
+#, fuzzy
+#| msgid "Race: "
+msgid "Race:"
+msgstr "العرق: "
+
+#: src/help/help_topic_generators.cpp:562
+#, fuzzy
+#| msgid "Abilities: "
+msgid "Abilities:"
+msgstr "القدرات: "
+
+#: src/help/help_topic_generators.cpp:588
+#, fuzzy
+#| msgid "Ability Upgrades: "
+msgid "Ability Upgrades:"
+msgstr "تطورات القدرات: "
+
+#. TRANSLATORS: This string is used in the help page of a single unit. If the translation
+#. uses spaces, use non-breaking spaces as appropriate for the target language to prevent
+#. unpleasant line breaks (issue #3256).
+#: src/help/help_topic_generators.cpp:618
+msgid "HP:"
+msgstr "نقاط الحياة:"
+
+#. TRANSLATORS: This string is used in the help page of a single unit. If the translation
+#. uses spaces, use non-breaking spaces as appropriate for the target language to prevent
+#. unpleasant line breaks (issue #3256).
+#: src/help/help_topic_generators.cpp:622
+msgid "Moves:"
+msgstr "الحركات:"
+
+#. TRANSLATORS: This string is used in the help page of a single unit.  If the translation
+#. uses spaces, use non-breaking spaces as appropriate for the target language to prevent
+#. unpleasant line breaks (issue #3256).
+#: src/help/help_topic_generators.cpp:627
+msgid "Vision:"
+msgstr "الرؤية:"
+
+#. TRANSLATORS: This string is used in the help page of a single unit. If the translation
+#. uses spaces, use non-breaking spaces as appropriate for the target language to prevent
+#. unpleasant line breaks (issue #3256).
+#: src/help/help_topic_generators.cpp:633
+msgid "Jamming:"
+msgstr "القفز:"
+
+#. TRANSLATORS: This string is used in the help page of a single unit. If the translation
+#. uses spaces, use non-breaking spaces as appropriate for the target language to prevent
+#. unpleasant line breaks (issue #3256).
+#: src/help/help_topic_generators.cpp:638
+msgid "Cost:"
+msgstr "الكلفة:"
+
+#. TRANSLATORS: This string is used in the help page of a single unit. If the translation
+#. uses spaces, use non-breaking spaces as appropriate for the target language to prevent
+#. unpleasant line breaks (issue #3256).
+#: src/help/help_topic_generators.cpp:642
+msgid "Alignment:"
+msgstr "التوجه:"
+
+#. TRANSLATORS: This string is used in the help page of a single unit. It uses
+#. non-breaking spaces to prevent unpleasant line breaks (issue #3256). In the
+#. translation use non-breaking spaces as appropriate for the target language.
+#: src/help/help_topic_generators.cpp:649
+msgid "Required XP:"
+msgstr "التجربة المطلوبة:"
+
+#: src/help/help_topic_generators.cpp:667
+msgid "Attacks"
+msgstr "الهجمات"
+
+#: src/help/help_topic_generators.cpp:670
+#, fuzzy
+#| msgid "Attack Type"
+msgid "Attacks per turn: "
+msgstr "نوع الهجوم"
+
+#: src/help/help_topic_generators.cpp:689
+msgid "Name"
+msgstr "الاسم"
+
+#: src/help/help_topic_generators.cpp:690
+msgid "Strikes"
+msgstr "الضربات"
+
+#: src/help/help_topic_generators.cpp:691
+msgid "Range"
+msgstr "المدى"
+
+#: src/help/help_topic_generators.cpp:692
+msgid "Type"
+msgstr "النوع"
+
+#: src/help/help_topic_generators.cpp:693
+msgid "Special"
+msgstr "الخاصية"
+
+#: src/help/help_topic_generators.cpp:715
+msgid "uses $num attack"
+msgid_plural "uses $num attacks"
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+msgstr[3] ""
+msgstr[4] ""
+msgstr[5] ""
+
+#: src/help/help_topic_generators.cpp:795
+msgid "Resistances"
+msgstr "الدفاعات"
+
+#: src/help/help_topic_generators.cpp:800
+msgid "Attack Type"
+msgstr "نوع الهجوم"
+
+#: src/help/help_topic_generators.cpp:801
+msgid "Resistance"
+msgstr "المقاومة"
+
+#: src/help/help_topic_generators.cpp:833
+msgid "Terrain Modifiers"
+msgstr "مغير الأرض"
+
+#: src/help/help_topic_generators.cpp:837
+msgid "Terrain"
+msgstr "الارضية"
+
+#: src/help/help_topic_generators.cpp:838
+msgid "Defense"
+msgstr "الدفاع"
+
+#: src/help/help_topic_generators.cpp:839
+msgid "Movement Cost"
+msgstr "كلفة الحركة"
+
+#: src/help/help_topic_generators.cpp:840
+msgid "Defense Cap"
+msgstr "حدّ الدفاع"
+
+#: src/help/help_topic_generators.cpp:841
+msgid "Vision Cost"
+msgstr "كلفة الرؤية"
+
+#: src/help/help_topic_generators.cpp:842
+msgid "Jamming Cost"
+msgstr "كلفة القفز"
+
+#~ msgid ""
+#~ "Many Knights choose the path of the Paladin, Delfador, but I am an heir of the Horse "
+#~ "Lords. I shall be a Grand Knight."
+#~ msgstr ""
+#~ "الكثير من الفرسان يختارون طريق البالادين، يا ديلفادور، لكنني وريث أمراء الخيول. "
+#~ "سأكون فارساً عظيماً."
+
+#~ msgid ""
+#~ "I am glad to be a Grand Knight, Delfador. Many Knights choose the path of the "
+#~ "Paladin, but such is unbecoming for an heir of the Horse Lords."
+#~ msgstr ""
+#~ "أنا سعيد بأن أكون فارساً عظيماً، يا ديلفادور. الكثير من الفرسان يختارون طريق "
+#~ "البالادين، لكن هذا لا يليق بوريث أمراء الخيول."
+
+#~ msgid "deflect"
+#~ msgstr "انحراف"
+
+#~ msgid "When used defensively, this attack reduces the opponent’s chance to hit by 10%."
+#~ msgstr "عند استخدامها بشكل دفاعي، تقلل هذه الهجمة من فرصة الخصم في الضرب بنسبة 10%."
+
+#~ msgid ""
+#~ "This unit’s defensive techniques reduce the chance of a successful enemy attack."
+#~ msgstr "التقنيات الدفاعية لهذه الوحدة تقلل من فرصة هجوم العدو الناجح."
+
+#~ msgid "absorb"
+#~ msgstr "امتصاص"
+
+#~ msgid ""
+#~ "This attack puts the unit in good defensive position, and it absorbs some of the "
+#~ "damage dealt by an enemy strike."
+#~ msgstr "هذا الهجوم يضع الوحدة في وضع دفاعي جيد، ويمتص بعض الضرر الناتج عن ضربة العدو."
+
+#~ msgid "This unit can block enemy strikes, so that it takes reduced damage when hit."
+#~ msgstr "هذه الوحدة يمكنها صد ضربات العدو، بحيث تتلقى ضررًا أقل عند ضربها."
+
+msgid ""
+"Raised elevation editor palette icon\n"
+"\n"
+"To make a patch of terrain higher or lower, and still be able to use other overlay "
+"terrains such as trees, you will need to use these markers. Placing one of these "
+"arrows on the map will flood-fill the map with a color-coded haze; neither the haze "
+"nor the arrow will be visible in game. The hazed area will have a border ledge, "
+"making it look higher or lower than the adjacent tiles.\n"
+"\n"
+"There are two high markers and two low markers, so it is possible to make terraces "
+"of up to five levels (lowest, lower, normal, higher, highest). Placing a high region "
+"next to a low region does not result in larger cliffs.\n"
+msgstr ""
+"أيقونة لوحة محرر الارتفاعات المرتفعة\n"
+"\n"
+"لجعل رقعة من التضاريس أعلى أو أخفض، مع الاستمرار في استخدام التضاريس المتراكبة "
+"الأخرى مثل الأشجار، ستحتاج إلى استخدام هذه العلامات. سيؤدي وضع أحد هذه الأسهم على "
+"الخريطة إلى ملء الخريطة بضباب ملون ضبابي؛ لن يكون الضباب ولا السهم مرئيًا في اللعبة. "
+"سيكون للمنطقة الضبابية حافة حدودية، مما يجعلها تبدو أعلى أو أقل من المربعات "
+"المجاورة.\n"
+"\n"
+"هناك علامتان عاليتان وعلامتان منخفضتان، لذا من الممكن عمل مصاطب تصل إلى خمسة مستويات "
+"(أدنى، دان، عادي، عال، أعلى). وضع منطقة مرتفعة بجوار منطقة منخفضة لا ينتج عنه "
+"منحدرات أكبر.\n"
+
+#~ msgid "Using a separate file for WML events"
+#~ msgstr "استخدام ملف منفصل لأحداث WML"
+
+#~ msgid ""
+#~ "The Wood Elves are separate from those of the north, and have only intermittent "
+#~ "relations with them and most other countries. Its borders are the "
+#~ "<ref>dst='great_ocean' text='ocean'</ref> to the west, the Black River to the south "
+#~ "and southeast, the lands of Wesnoth to the north and the Kerlath province to the "
+#~ "east.\n"
+#~ "\n"
+#~ "<header>text='Notable cities:'</header>\n"
+#~ "    • None known.\n"
+#~ "\n"
+#~ "<header>text='Notable land features:'</header>\n"
+#~ "    • Aethenwood: The largest southern forest, it extends far to the south and is "
+#~ "home to <ref>dst='..race_elf' text='elves'</ref>. Although the elves make no such "
+#~ "distinction, the southern part of the forest has been named Southwood by denizens of "
+#~ "Kerlath.\n"
+#~ "    • Black Forest: An ancient forest of which very little is known, abandoned by "
+#~ "the elves long ago."
+#~ msgstr ""
+#~ "إن إلف الغابات منفصلون عن سكان الشمال، ولا تربطهم سوى علاقات متقطعة معهم ومعظم الدول "
+#~ "الأخرى. حدودها هي <ref>dst='great_ocean' text='المحيط'</ref> من الغرب، والنهر الأسود "
+#~ "من الجنوب والجنوب الشرقي، وأراضي ويسنوث من الشمال، ومقاطعة كيرلاث من الشرق.\n"
+#~ "\n"
+#~ "<header>text='المدن البارزة:'</header>\n"
+#~ "    - لا شيء معروف.\n"
+#~ "\n"
+#~ "<header>text='معالم الأرض البارزة:'</header>\n"
+#~ "    - أثنوود: أكبر غابة جنوبية، وتمتد إلى أقصى الجنوب وهي موطن لـ <ref>dst='..."
+#~ "race_elf' text='الإلف'</ref>. على الرغم من أن الإلف لا يميزون مثل هذا التمييز، إلا "
+#~ "أن الجزء الجنوبي من الغابة سمي ساوثوود من قبل سكان كيرلاث.\n"
+#~ "    - الغابة السوداء: غابة قديمة لا يُعرف عنها إلا القليل، هجرها الإلف منذ زمن بعيد."
+
+#~ msgid ""
+#~ "A virtually impassable barrier between the <ref>dst='arkan_thoria' text='river'</"
+#~ "ref> country and the <ref>dst='far_north' text='Northern Plains'</ref>."
+#~ msgstr ""
+#~ "حاجز غير قابل للعبور فعليًا بين <ref>dst='arkan_thoria' text='نهر'</ref> البلد "
+#~ "و<ref>dst='far_north' text='السهول الشمالية'</ref>."
+
+#~ msgid "Close"
+#~ msgstr "غلق"
+
+#~ msgid "Help"
+#~ msgstr "المساعدة"
+
+#~ msgid "Parse error when parsing help text:"
+#~ msgstr "خطأ في التحليل عند تحليل نص التعليمات:"
+
+#~ msgid "unit help^Attacks"
+#~ msgstr "الهجمات"
+
+#~ msgid "unit help^Name"
+#~ msgstr "الاسم"
