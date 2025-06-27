@@ -182,15 +182,16 @@ function parsePoEntries(content) {
 		outputDiv.appendChild(table);
 	}
 	
-	function renderMatches(matches, dictionary, entries) {
+	// Update the renderMatches function to include manual correction
+function renderMatches(matches, dictionary, entries) {
     const outputDiv = document.getElementById('dictionary-manager-dictionaryOutput');
     outputDiv.innerHTML = '';
     
     const matchesContainer = document.createElement('div');
     matchesContainer.className = 'dictionary-manager-matches';
     matchesContainer.innerHTML = `
-        <h3>Dictionary Matches Found</h3>
-        <p>${matches.length} entries matched the dictionary</p>
+        <h3>Dictionary Conflicts Found</h3>
+        <p>${matches.length} entries conflict with existing dictionary values</p>
         <div class="dictionary-manager-matches-container"></div>
     `;
     
@@ -207,19 +208,45 @@ function parsePoEntries(content) {
                 <div class="dictionary-manager-match-option">
                     <label>
                         <input type="radio" name="${match.msgid}" value="existing" checked>
-                        Use existing: "${match.existing}"
+                        Use existing: 
                     </label>
+                    <div class="dictionary-manager-match-value">${match.existing}</div>
                 </div>
                 <div class="dictionary-manager-match-option">
                     <label>
                         <input type="radio" name="${match.msgid}" value="new">
-                        Use new: "${match.new}"
+                        Use new: 
                     </label>
+                    <div class="dictionary-manager-match-value">${match.new}</div>
+                </div>
+                <div class="dictionary-manager-match-option">
+                    <label>
+                        <input type="radio" name="${match.msgid}" value="custom">
+                        Custom value:
+                    </label>
+                    <textarea class="dictionary-manager-custom-value" 
+                              rows="2" 
+                              placeholder="Enter custom translation..."
+                              data-msgid="${match.msgid}"></textarea>
                 </div>
             </div>
         `;
         container.appendChild(matchDiv);
     }
+    
+    // Add event listeners to enable/disable textareas
+    container.querySelectorAll('input[type="radio"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const textarea = this.closest('.dictionary-manager-match-option')
+                              .querySelector('.dictionary-manager-custom-value');
+            if (this.value === 'custom') {
+                textarea.disabled = false;
+                textarea.focus();
+            } else {
+                textarea.disabled = true;
+            }
+        });
+    });
     
     const confirmBtn = document.createElement('button');
     confirmBtn.textContent = 'Confirm Selections';
@@ -227,18 +254,26 @@ function parsePoEntries(content) {
     confirmBtn.className = 'dictionary-manager-btn dictionary-manager-btn-primary';
     
     confirmBtn.addEventListener('click', () => {
-        container.querySelectorAll('input[type="radio"]:checked').forEach(option => {
-            const msgid = option.name;
-            if (option.value === 'new') {
-                const newValue = matches.find(m => m.msgid === msgid).new;
-                dictionary.entries[msgid] = newValue;
+        container.querySelectorAll('.dictionary-manager-match').forEach(match => {
+            const msgid = match.querySelector('strong').textContent;
+            const selectedOption = match.querySelector('input[type="radio"]:checked').value;
+            
+            if (selectedOption === 'existing') {
+                // Keep existing value
+            } else if (selectedOption === 'new') {
+                dictionary.entries[msgid] = matches.find(m => m.msgid === msgid).new;
+            } else if (selectedOption === 'custom') {
+                const customValue = match.querySelector('.dictionary-manager-custom-value').value;
+                if (customValue.trim()) {
+                    dictionary.entries[msgid] = customValue;
+                }
             }
         });
         
         const addedCount = filterAndAddEntries(dictionary, entries);
         localStorage.setItem(`dictionary-${dictionary.metadata.language}`, JSON.stringify(dictionary));
         renderDictionary(dictionary);
-        statusDiv.textContent = `Updated ${matches.length} conflicts and added ${addedCount} new entries`;
+        statusDiv.textContent = `Resolved ${matches.length} conflicts and added ${addedCount} new entries`;
         matchesContainer.remove();
     });
     
