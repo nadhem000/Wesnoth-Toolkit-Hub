@@ -1,537 +1,351 @@
-// DOM elements with new prefix
-const fileInput = document.getElementById('dictionary-manager-fileInput');
-const poContent = document.getElementById('dictionary-manager-poContent');
-const languageSelect = document.getElementById('dictionary-manager-language');
-const wordCountSelect = document.getElementById('dictionary-manager-wordCount');
-const processBtn = document.getElementById('dictionary-manager-processBtn');
-const downloadBtn = document.getElementById('dictionary-manager-downloadBtn');
-const uploadDictBtn = document.getElementById('dictionary-manager-uploadDictBtn');
-const dictUploadInput = document.getElementById('dictionary-manager-dictUploadInput');
-const dictionaryOutput = document.getElementById('dictionary-manager-dictionaryOutput');
-const statusDiv = document.getElementById('dictionary-manager-status');
-const saveDictBtn = document.getElementById('dictionary-manager-saveDictBtn');
-const applyDictBtn = document.getElementById('dictionary-manager-applyDictBtn');
-const clearDictBtn = document.getElementById('dictionary-manager-clearDictBtn');
-const applyMode = document.getElementById('dictionary-manager-applyMode');
-const applicationOutput = document.getElementById('dictionary-manager-applicationOutput');
-const downloadModifiedBtn = document.getElementById('dictionary-manager-downloadModifiedBtn');
-
-// State variables
-let dictionary = {};
-let currentLanguage = 'es'; // Default to Spanish
-let modifiedContent = '';
-
-// Event listeners
-processBtn.addEventListener('click', processFiles);
-downloadBtn.addEventListener('click', downloadDictionary);
-uploadDictBtn.addEventListener('click', () => dictUploadInput.click());
-dictUploadInput.addEventListener('change', handleDictionaryUpload);
-languageSelect.addEventListener('change', (e) => {
-    currentLanguage = e.target.value;
-});
-saveDictBtn.addEventListener('click', saveDictionaryToLocal);
-applyDictBtn.addEventListener('click', applyDictionary);
-clearDictBtn.addEventListener('click', clearDictionary);
-downloadModifiedBtn.addEventListener('click', downloadModifiedPo);
-
-function processFiles() {
-    const files = fileInput.files;
-    const content = poContent.value.trim();
-    
-    if (files.length === 0 && content === '') {
-        showStatus('Please upload or paste .po file content', 'error');
-        return;
-    }
-    
-    dictionary = {}; // Reset dictionary
-    
-    // Process uploaded files
-    if (files.length > 0) {
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            if (!file.name.endsWith('.po')) {
-                showStatus(`Skipping non-.po file: ${file.name}`, 'error');
-                continue;
-            }
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                parsePoContent(e.target.result, file.name);
-                if (i === files.length - 1 && content === '') {
-                    finishProcessing();
-                }
-            };
-            reader.readAsText(file);
-        }
-    }
-    
-    // Process pasted content
-    if (content !== '') {
-        parsePoContent(content, 'pasted-content.po');
-        finishProcessing();
-    }
-}
-
-function parsePoContent(content, filename) {
-    const lines = content.split('\n');
-    let currentMsgid = '';
-    let currentMsgidPlural = '';
-    let currentMsgstr = '';
-    let currentMsgstrPlural = {};
-    let inMsgstr = false;
-    let inMsgstrPlural = false;
-    let pluralIndex = 0;
-    
-    for (let line of lines) {
-        line = line.trim();
+document.addEventListener('DOMContentLoaded', () => {
+    const processBtn = document.getElementById('dictionary-manager-processBtn');
+    const fileInput = document.getElementById('dictionary-manager-fileInput');
+    const poContentTextarea = document.getElementById('dictionary-manager-poContent');
+    const statusDiv = document.getElementById('dictionary-manager-status');
+	
+    async function getPoContent() {
+        if (poContentTextarea.value.trim() !== '') {
+            return poContentTextarea.value;
+		}
+		
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(new Error('File reading error'));
+                reader.readAsText(file);
+			});
+		}
+		
+        return null;
+	}
+	
+    function extractHeader(content) {
+        const lines = content.split(/\r?\n/);
+        let headerEnd = 0;
         
-        if (line.startsWith('msgid "')) {
-            // New message starts
-            if (currentMsgid && currentMsgstr) {
-                addToDictionaryIfMatchesWordCount(currentMsgid, currentMsgstr);
-            }
-            
-            // Reset state
-            currentMsgid = extractQuotedContent(line);
-            currentMsgstr = '';
-            inMsgstr = false;
-            inMsgstrPlural = false;
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].trim() === '') {
+                headerEnd = i;
+                break;
+			}
+		}
+        
+        return {
+            header: lines.slice(0, headerEnd + 1).join('\n'),
+            message: `Header extracted (${headerEnd + 1} lines)`
+		};
+	}
+	
+    function extractLanguageLine(header) {
+        const regex = /Language:\s*([^\n]+)/i;
+        const match = header.match(regex);
+        if (match && match[1]) {
+            console.log(`Extracted language line: ${match[0]}`);
+            return match[1].trim();
+		}
+        console.log('No language line found in header');
+        return null;
+	}
+	
+	function cleanLanguageCode(languageLine) {
+		// Remove newlines first
+		let cleaned = languageLine.replace(/\n/g, '');
+		
+		// Find the position of the backslash
+		const backslashIndex = cleaned.indexOf('\\');
+		
+		// If backslash is found, remove it and everything after it
+		if (backslashIndex !== -1) {
+			cleaned = cleaned.substring(0, backslashIndex);
+		}
+		
+		// Remove any quotes and trim whitespace
+		cleaned = cleaned.replace(/['"]/g, '').trim();
+		console.log(`Cleaned language code: ${cleaned}`);
+		return cleaned;
+	}
+function parsePoEntries(content) {
+    const entries = [];
+    const blocks = content.split(/\n\n/);
+    
+    for (const block of blocks) {
+        if (!block.trim()) continue;
+        
+        // Skip blocks with continuation lines (multi-line entries)
+        if (block.includes('\n"') || block.includes('\n#~ "')) {
+            continue;
         }
-        else if (line.startsWith('msgid_plural "')) {
-            currentMsgidPlural = extractQuotedContent(line);
-            currentMsgstrPlural = {};
-            inMsgstrPlural = true;
+        
+        const msgidMatch = block.match(/(?:#~ *)?msgid\s+"(.*?[^\\])"/);
+        if (!msgidMatch) continue;
+        
+        const msgstrMatch = block.match(/(?:#~ *)?msgstr\s+"(.*?[^\\])"/);
+        const msgid = msgidMatch[1].replace(/\\"/g, '"').trim();
+        const msgstr = msgstrMatch ? msgstrMatch[1].replace(/\\"/g, '"').trim() : "";
+        
+        // Skip empty/invalid msgid values
+        if (!msgid || 
+            msgid === "\\n" || 
+            msgid === "\\t" || 
+            msgid === "\\r" || 
+            msgid === '""' || 
+            msgid === '') {
+            continue;
         }
-        else if (line.startsWith('msgstr "')) {
-            inMsgstr = true;
-            inMsgstrPlural = false;
-            currentMsgstr = extractQuotedContent(line);
-        }
-        else if (line.startsWith('msgstr[')) {
-            inMsgstr = false;
-            inMsgstrPlural = true;
-            const bracketIndex = line.indexOf(']');
-            pluralIndex = parseInt(line.substring(7, bracketIndex));
-            currentMsgstrPlural[pluralIndex] = extractQuotedContent(line);
-        }
-        else if ((inMsgstr || inMsgstrPlural) && line.startsWith('"') && line.endsWith('"')) {
-            const content = extractQuotedContent(line);
-            if (inMsgstr) {
-                currentMsgstr += content;
-            } else if (inMsgstrPlural) {
-                currentMsgstrPlural[pluralIndex] += content;
-            }
-        }
+        
+        entries.push({ msgid, msgstr });
     }
     
-    // Add the last message if any
-    if (currentMsgid && currentMsgstr) {
-        addToDictionaryIfMatchesWordCount(currentMsgid, currentMsgstr);
-    }
-    
-    // Add plural forms if any
-    if (currentMsgidPlural && Object.keys(currentMsgstrPlural).length > 0) {
-        for (const [index, translation] of Object.entries(currentMsgstrPlural)) {
-            const pluralKey = `${currentMsgid} | ${currentMsgidPlural} [${index}]`;
-            addToDictionaryIfMatchesWordCount(pluralKey, translation);
-        }
-    }
-    
-    showStatus(`Processed: ${filename}`, 'success');
+    return entries;
 }
-
-function addToDictionaryIfMatchesWordCount(key, value) {
-    if (!key || !value) return;
+	
+	function createDictionaryContainer(languagePo) {
+		const wordCount = document.getElementById('dictionary-manager-wordCount').value;
+		const dictionary = {
+			metadata: {
+				language: languagePo,
+				wordCount: wordCount,
+				created: new Date().toISOString(),
+				version: "1.0",
+				source: "po-file-extractor"
+			},
+			entries: {}
+		};
+		localStorage.setItem(`dictionary-${languagePo}`, JSON.stringify(dictionary));
+		return dictionary;
+	}
+	
+	function processDictionaryMatches(dictionary, entries) {
+		const matches = [];
+		
+		for (const entry of entries) {
+			if (dictionary.entries[entry.msgid] !== undefined) {
+				matches.push({
+					msgid: entry.msgid,
+					existing: dictionary.entries[entry.msgid],
+					new: entry.msgstr
+				});
+			}
+		}
+		
+		return matches;
+	}
+	function renderDictionary(dictionary) {
+		const outputDiv = document.getElementById('dictionary-manager-dictionaryOutput');
+		outputDiv.innerHTML = '';
+		
+		const table = document.createElement('table');
+		table.style.width = '100%';
+		table.style.borderCollapse = 'collapse';
+		table.style.marginTop = '10px';
+		
+		// Create header row
+		const headerRow = document.createElement('tr');
+		const keyHeader = document.createElement('th');
+		keyHeader.textContent = 'Key';
+		keyHeader.style.borderBottom = '2px solid #3498db';
+		keyHeader.style.padding = '8px';
+		keyHeader.style.textAlign = 'left';
+		
+		const valueHeader = document.createElement('th');
+		valueHeader.textContent = 'Value';
+		valueHeader.style.borderBottom = '2px solid #3498db';
+		valueHeader.style.padding = '8px';
+		valueHeader.style.textAlign = 'left';
+		
+		headerRow.appendChild(keyHeader);
+		headerRow.appendChild(valueHeader);
+		table.appendChild(headerRow);
+		
+		// Add entries
+		const entries = dictionary.entries;
+		for (const [key, value] of Object.entries(entries)) {
+			const row = document.createElement('tr');
+			row.style.borderBottom = '1px solid #eee';
+			
+			const keyCell = document.createElement('td');
+			keyCell.textContent = key;
+			keyCell.style.padding = '8px';
+			
+			const valueCell = document.createElement('td');
+			valueCell.textContent = value;
+			valueCell.style.padding = '8px';
+			
+			row.appendChild(keyCell);
+			row.appendChild(valueCell);
+			table.appendChild(row);
+		}
+		
+		outputDiv.appendChild(table);
+	}
+	
+	function renderMatches(matches, dictionary, entries) {
+    const outputDiv = document.getElementById('dictionary-manager-dictionaryOutput');
+    outputDiv.innerHTML = '';
     
-    // Clean up key and value (remove escaped characters)
-    key = key.replace(/\\"/g, '"').replace(/\\n/g, '\n').trim();
-    value = value.replace(/\\"/g, '"').replace(/\\n/g, '\n').trim();
+    const matchesContainer = document.createElement('div');
+    matchesContainer.className = 'dictionary-manager-matches';
+    matchesContainer.innerHTML = `
+        <h3>Dictionary Matches Found</h3>
+        <p>${matches.length} entries matched the dictionary</p>
+        <div class="dictionary-manager-matches-container"></div>
+    `;
     
-    if (!key || !value) return;
+    const container = matchesContainer.querySelector('.dictionary-manager-matches-container');
     
-    // Count words in the key (msgid)
-    const words = key.split(/\s+/).filter(word => word.length > 0);
-    const wordCount = words.length;
-    
-    // Check if this entry matches our word count criteria
-    const wordCountOption = wordCountSelect.value;
-    if (
-        wordCountOption === 'both' || 
-        (wordCountOption === '1' && wordCount === 1) ||
-        (wordCountOption === '2' && wordCount === 2)
-    ) {
-        dictionary[key] = value;
-    }
-}
-
-function extractQuotedContent(line) {
-    const start = line.indexOf('"') + 1;
-    const end = line.lastIndexOf('"');
-    return line.substring(start, end);
-}
-
-function finishProcessing() {
-    showStatus(`Processing complete. ${Object.keys(dictionary).length} entries extracted.`, 'success');
-    displayDictionary();
-    downloadBtn.disabled = false;
-}
-
-function displayDictionary() {
-    if (Object.keys(dictionary).length === 0) {
-        dictionaryOutput.innerHTML = '<p class="dictionary-manager-no-entries">No dictionary entries found matching the criteria.</p>';
-        return;
-    }
-    
-    // Sort dictionary alphabetically
-    const sortedKeys = Object.keys(dictionary).sort((a, b) => a.localeCompare(b));
-    
-    let html = '';
-    for (const key of sortedKeys) {
-        const wordCount = key.split(/\s+/).filter(w => w.length > 0).length;
-        html += `
-        <div class="dictionary-manager-entry">
-            <div class="dictionary-manager-msgid">${escapeHtml(key)} <span class="dictionary-manager-word-count">(${wordCount} word${wordCount !== 1 ? 's' : ''})</span></div>
-            <div class="dictionary-manager-msgstr">${escapeHtml(dictionary[key])}</div>
-        </div>
+    for (const match of matches) {
+        const matchDiv = document.createElement('div');
+        matchDiv.className = 'dictionary-manager-match';
+        matchDiv.innerHTML = `
+            <div class="dictionary-manager-match-header">
+                <strong>${match.msgid}</strong>
+            </div>
+            <div class="dictionary-manager-match-options">
+                <div class="dictionary-manager-match-option">
+                    <label>
+                        <input type="radio" name="${match.msgid}" value="existing" checked>
+                        Use existing: "${match.existing}"
+                    </label>
+                </div>
+                <div class="dictionary-manager-match-option">
+                    <label>
+                        <input type="radio" name="${match.msgid}" value="new">
+                        Use new: "${match.new}"
+                    </label>
+                </div>
+            </div>
         `;
+        container.appendChild(matchDiv);
     }
     
-    dictionaryOutput.innerHTML = html;
-}
-
-function escapeHtml(unsafe) {
-    return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;")
-        .replace(/\n/g, "<br>");
-}
-
-function downloadDictionary() {
-    if (Object.keys(dictionary).length === 0) {
-        showStatus('Dictionary is empty', 'error');
-        return;
-    }
+    const confirmBtn = document.createElement('button');
+    confirmBtn.textContent = 'Confirm Selections';
+    confirmBtn.id = 'dictionary-manager-confirmBtn';
+    confirmBtn.className = 'dictionary-manager-btn dictionary-manager-btn-primary';
     
-    // Add metadata to the dictionary
-    const dictWithMeta = {
-        metadata: {
-            language: currentLanguage,
-            wordCount: wordCountSelect.value,
-            created: new Date().toISOString(),
-            version: "1.0",
-            source: "po-file-extractor"
-        },
-        entries: dictionary
-    };
-    
-    const dataStr = JSON.stringify(dictWithMeta, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-    
-    const exportFileName = `dictionary-${currentLanguage}-${wordCountSelect.value}-words-${new Date().toISOString().slice(0,10)}.json`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileName);
-    linkElement.click();
-    
-    showStatus(`Dictionary downloaded as ${exportFileName}`, 'success');
-}
-
-function handleDictionaryUpload(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const uploadedDict = JSON.parse(e.target.result);
-            
-            // Check if it's a dictionary file with our expected structure
-            if (uploadedDict.entries || uploadedDict.metadata) {
-                if (uploadedDict.entries) {
-                    dictionary = uploadedDict.entries;
-                } else {
-                    // Handle case where it's just a plain dictionary
-                    dictionary = uploadedDict;
-                }
-                
-                // Update settings from metadata if available
-                if (uploadedDict.metadata) {
-                    if (uploadedDict.metadata.language) {
-                        currentLanguage = uploadedDict.metadata.language;
-                        languageSelect.value = currentLanguage;
-                    }
-                    if (uploadedDict.metadata.wordCount) {
-                        wordCountSelect.value = uploadedDict.metadata.wordCount;
-                    }
-                }
-                
-                showStatus('Dictionary uploaded successfully', 'success');
-                displayDictionary();
-                downloadBtn.disabled = false;
-            } else {
-                showStatus('The file does not contain valid dictionary entries', 'error');
+    confirmBtn.addEventListener('click', () => {
+        container.querySelectorAll('input[type="radio"]:checked').forEach(option => {
+            const msgid = option.name;
+            if (option.value === 'new') {
+                const newValue = matches.find(m => m.msgid === msgid).new;
+                dictionary.entries[msgid] = newValue;
             }
-        } catch (err) {
-            showStatus('Error parsing dictionary file', 'error');
-            console.error(err);
-        }
-    };
-    reader.readAsText(file);
-}
-
-function saveDictionaryToLocal() {
-    const dictToSave = {
-        entries: dictionary,
-        language: currentLanguage,
-        timestamp: new Date().toISOString()
-    };
-    localStorage.setItem('poDictionary', JSON.stringify(dictToSave));
-    showStatus('Dictionary saved to localStorage', 'success');
-}
-
-function loadDictionaryFromLocal() {
-    const savedDict = localStorage.getItem('poDictionary');
-    if (savedDict) {
-        try {
-            const parsed = JSON.parse(savedDict);
-            dictionary = parsed.entries || {};
-            currentLanguage = parsed.language || currentLanguage;
-            languageSelect.value = currentLanguage;
-            showStatus('Dictionary loaded from localStorage', 'success');
-            displayDictionary();
-        } catch (e) {
-            showStatus('Error loading dictionary', 'error');
-        }
-    }
-}
-
-function clearDictionary() {
-    if (confirm('Clear current dictionary? All entries will be permanently removed.')) {
-        dictionary = {};
-        localStorage.removeItem('poDictionary');
-        displayDictionary();
-        showStatus('Dictionary cleared', 'success');
-    }
-}
-
-function showStatus(message, type) {
-    statusDiv.textContent = message;
-    statusDiv.className = `dictionary-manager-status dictionary-manager-${type}`;
-}
-
-// Load dictionary on page load
-document.addEventListener('DOMContentLoaded', loadDictionaryFromLocal);
-
-// Enhanced dictionary application
-function applyDictionary() {
-    const files = fileInput.files;
-    const content = poContent.value.trim();
-    
-    if (files.length === 0 && content === '') {
-        showStatus('Please upload or paste .po file content', 'error');
-        return;
-    }
-    
-    if (Object.keys(dictionary).length === 0) {
-        showStatus('Dictionary is empty', 'error');
-        return;
-    }
-    
-    const isAutoApply = applyMode.value === 'auto';
-    let poContentToApply = content;
-    
-    if (files.length > 0) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            processPoApplication(e.target.result, isAutoApply);
-        };
-        reader.readAsText(files[0]);
-    } else {
-        processPoApplication(poContentToApply, isAutoApply);
-    }
-}
-
-function processPoApplication(content, isAutoApply) {
-    const lines = content.split('\n');
-    let output = [];
-    let currentMsgid = '';
-    let currentMsgstr = '';
-    let inMsgstr = false;
-    let inPlural = false;
-    let suggestions = [];
-    
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
+        });
         
-        if (line.startsWith('msgid "')) {
-            // Save previous entry
-            if (currentMsgid && currentMsgstr) {
-                const [processed, suggestion] = processDictionaryMatch(
-                    currentMsgid, 
-                    currentMsgstr, 
-                    isAutoApply
-                );
-                output.push(processed);
-                if (suggestion) suggestions.push(suggestion);
-            }
-            
-            // Reset state
-            currentMsgid = extractQuotedContent(line);
-            currentMsgstr = '';
-            inMsgstr = false;
-            inPlural = false;
-            output.push(lines[i]); // Keep the msgid line
-        }
-        else if (line.startsWith('msgid_plural "')) {
-            inPlural = true;
-            output.push(lines[i]);
-            continue;
-        }
-        else if (line.startsWith('msgstr "') && !inPlural) {
-            inMsgstr = true;
-            currentMsgstr = extractQuotedContent(line);
-            // We'll process this later
-        }
-        else if (line.startsWith('msgstr[')) {
-            inMsgstr = true;
-            inPlural = true;
-            output.push(lines[i]);
-            continue;
-        }
-        else if (inMsgstr && line.startsWith('"') && line.endsWith('"')) {
-            currentMsgstr += extractQuotedContent(line);
-        }
-        else {
-            // End of current entry or other line
-            if (currentMsgid && currentMsgstr) {
-                const [processed, suggestion] = processDictionaryMatch(
-                    currentMsgid, 
-                    currentMsgstr, 
-                    isAutoApply
-                );
-                output.push(processed);
-                if (suggestion) suggestions.push(suggestion);
-                
-                // Reset translation state
-                currentMsgstr = '';
-                inMsgstr = false;
-            }
-            output.push(lines[i]);
-        }
-    }
-    
-    // Handle last entry
-    if (currentMsgid && currentMsgstr) {
-        const [processed, suggestion] = processDictionaryMatch(
-            currentMsgid, 
-            currentMsgstr, 
-            isAutoApply
-        );
-        output.push(processed);
-        if (suggestion) suggestions.push(suggestion);
-    }
-    
-    modifiedContent = output.join('\n');
-    applicationOutput.innerHTML = isAutoApply 
-        ? `<pre>${escapeHtml(modifiedContent)}</pre>` 
-        : formatSuggestions(suggestions);
-    
-    downloadModifiedBtn.disabled = false;
-    showStatus(isAutoApply 
-        ? 'Dictionary applied automatically' 
-        : `${suggestions.length} suggestions generated`, 'success');
-}
-
-function processDictionaryMatch(msgid, msgstr, isAutoApply) {
-    const cleanMsgid = msgid.replace(/\\"/g, '"').replace(/\\n/g, '\n').trim();
-    
-    // Check for plural forms
-    const pluralMatch = cleanMsgid.match(/^(.*) \| (.*) \[(\d+)\]$/);
-    let cleanKey = cleanMsgid;
-    let pluralIndex = -1;
-    
-    if (pluralMatch) {
-        cleanKey = pluralMatch[1];
-        pluralIndex = parseInt(pluralMatch[3]);
-    }
-    
-    if (dictionary[cleanKey]) {
-        const suggested = pluralIndex >= 0 
-            ? dictionary[cleanKey].split('|')[pluralIndex]?.trim() || ''
-            : dictionary[cleanKey];
-        
-        if (isAutoApply) {
-            // Auto-apply mode - replace translation
-            return [formatPoLine('msgstr', suggested), null];
-        } else {
-            // Suggestion mode - show diff
-            return [formatPoLine('msgstr', msgstr), { 
-                msgid: cleanKey, 
-                original: msgstr, 
-                suggested 
-            }];
-        }
-    }
-    
-    // No match - return original
-    return [formatPoLine('msgstr', msgstr), null];
-}
-
-function formatPoLine(prefix, content) {
-    // Format content for .po file (escape and split long lines)
-    let escaped = content
-        .replace(/\\/g, '\\\\')
-        .replace(/"/g, '\\"')
-        .replace(/\n/g, '\\n');
-    
-    // Simple line wrapping
-    const maxLineLength = 80;
-    let formatted = `${prefix} "${escaped.substring(0, maxLineLength)}"`;
-    let pos = maxLineLength;
-    
-    while (pos < escaped.length) {
-        const chunk = escaped.substring(pos, pos + maxLineLength);
-        formatted += `\n"${chunk}"`;
-        pos += maxLineLength;
-    }
-    
-    return formatted;
-}
-
-function formatSuggestions(suggestions) {
-    if (suggestions.length === 0) {
-        return '<p class="dictionary-manager-no-suggestions">No suggestions found in dictionary</p>';
-    }
-    
-    let html = '<div class="dictionary-manager-suggestions-container">';
-    html += `<p class="dictionary-manager-suggestion-count">Found ${suggestions.length} suggestions:</p>`;
-    
-    suggestions.forEach(suggestion => {
-        html += `
-        <div class="dictionary-manager-suggestion">
-            <div class="dictionary-manager-msgid">${escapeHtml(suggestion.msgid)}</div>
-            <div class="dictionary-manager-original">Original: ${escapeHtml(suggestion.original)}</div>
-            <div class="dictionary-manager-suggested">Suggested: ${escapeHtml(suggestion.suggested)}</div>
-        </div>`;
+        const addedCount = filterAndAddEntries(dictionary, entries);
+        localStorage.setItem(`dictionary-${dictionary.metadata.language}`, JSON.stringify(dictionary));
+        renderDictionary(dictionary);
+        statusDiv.textContent = `Updated ${matches.length} conflicts and added ${addedCount} new entries`;
+        matchesContainer.remove();
     });
     
-    html += '</div>';
-    return html;
+    matchesContainer.appendChild(confirmBtn);
+    outputDiv.appendChild(matchesContainer);
 }
-
-function downloadModifiedPo() {
-    const blob = new Blob([modifiedContent], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `modified-${new Date().toISOString().slice(0, 10)}.po`;
-    link.click();
-    
-    URL.revokeObjectURL(url);
-    showStatus('Modified .po file downloaded', 'success');
-}
+	// Function to count words in a string
+	function countWords(str) {
+		return str.trim().split(/\s+/).filter(word => word.length > 0).length;
+	}
+	
+	// Function to filter and add entries to dictionary
+	function filterAndAddEntries(dictionary, entries) {
+		const wordCountSetting = document.getElementById('dictionary-manager-wordCount').value;
+		let addedCount = 0;
+		
+		entries.forEach(entry => {
+			if (!entry.msgid) return;
+			
+			const wordCount = countWords(entry.msgid);
+			const isSingleWord = wordCount === 1;
+			const isTwoWords = wordCount === 2;
+			
+			let shouldAdd = false;
+			
+			if (wordCountSetting === "1" && isSingleWord) {
+				shouldAdd = true;
+				} else if (wordCountSetting === "2" && isTwoWords) {
+				shouldAdd = true;
+				} else if (wordCountSetting === "both" && (isSingleWord || isTwoWords)) {
+				shouldAdd = true;
+			}
+			
+			if (shouldAdd && !dictionary.entries[entry.msgid]) {
+				dictionary.entries[entry.msgid] = entry.msgstr;
+				addedCount++;
+			}
+		});
+		
+		return addedCount;
+	}
+	processBtn.addEventListener('click', async () => {
+		statusDiv.textContent = 'Processing...';
+		
+		try {
+			const content = await getPoContent();
+			if (!content) {
+				statusDiv.textContent = 'Error: No .po content found';
+				return;
+			}
+			
+			const { header } = extractHeader(content);
+			const languageLine = extractLanguageLine(header);
+			
+			if (!languageLine) {
+				statusDiv.textContent = 'Error: No language found in PO header';
+				return;
+			}
+			
+			const languagePo = cleanLanguageCode(languageLine);
+			const selectedLanguage = document.getElementById('dictionary-manager-language').value;
+			
+			if (languagePo !== selectedLanguage) {
+				const warning = `Warning: PO language (${languagePo}) doesn't match selected language (${selectedLanguage})`;
+				console.warn(warning);
+				statusDiv.textContent = warning;
+				return;
+			}
+			
+			console.log(`Language validation passed: ${languagePo} === ${selectedLanguage}`);
+			statusDiv.textContent = 'Language validation passed. Checking dictionary...';
+			
+			// Step 3: Check for existing dictionary container
+			const dictionaryKey = `dictionary-${languagePo}`;
+			let dictionary = JSON.parse(localStorage.getItem(dictionaryKey));
+			
+			if (dictionary) {
+				console.log(`Found existing dictionary for ${languagePo}`);
+				statusDiv.textContent = `Loaded existing dictionary for ${languagePo}`;
+				} else {
+				console.log(`Creating new dictionary for ${languagePo}`);
+				dictionary = createDictionaryContainer(languagePo);
+				statusDiv.textContent = `Created new dictionary for ${languagePo}`;
+			}
+			
+			// Render the dictionary
+			renderDictionary(dictionary);
+			console.log('Dictionary displayed in output area');
+			
+			
+            const entries = parsePoEntries(content);
+            
+            // STEP 4: Handle dictionary matches
+            const matches = processDictionaryMatches(dictionary, entries);
+            if (matches.length > 0) {
+                renderMatches(matches, dictionary, entries);  // Modified function
+                statusDiv.textContent = `Found ${matches.length} dictionary matches - review below`;
+                return;  // Pause process until user confirms
+            }
+            
+            // STEP 5: Proceed if no matches found
+            const addedCount = filterAndAddEntries(dictionary, entries);
+            localStorage.setItem(`dictionary-${languagePo}`, JSON.stringify(dictionary));
+            renderDictionary(dictionary);
+            statusDiv.textContent = `Added ${addedCount} new entries`;
+        } catch (error) {
+            statusDiv.textContent = `Error: ${error.message}`;
+        }
+	});
+});	

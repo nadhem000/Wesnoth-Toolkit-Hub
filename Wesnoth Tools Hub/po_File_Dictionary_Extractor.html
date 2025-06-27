@@ -1,140 +1,303 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="styles/po_File_Dictionary_Extractor.css">
-    <title>.po File Dictionary Manager</title>
-</head>
-<body>
-    <div class="dictionary-manager-container">
-        <h1 class="dictionary-manager-title">.po File Dictionary Manager</h1>
-        
-        <div class="dictionary-manager-section">
-            <h2 class="dictionary-manager-subtitle">Input</h2>
-            <div class="dictionary-manager-control-group">
-                <input type="file" id="dictionary-manager-fileInput" multiple accept=".po" class="dictionary-manager-file-input">
-                <p class="dictionary-manager-hint">or paste .po content here:</p>
-                <textarea id="dictionary-manager-poContent" placeholder="Paste .po file content here..." class="dictionary-manager-textarea"></textarea>
-            </div>
-        </div>
-
-        <div class="dictionary-manager-section">
-            <h2 class="dictionary-manager-subtitle">Processing Options</h2>
-            <div class="dictionary-manager-control-group">
-                <div class="dictionary-manager-form-row">
-                    <label for="dictionary-manager-language" class="dictionary-manager-label">Target Language:</label>
-                    <select id="dictionary-manager-language" class="dictionary-manager-select">
-					<option value="en_GB">British English</option>
-					<option value="it">Italian</option>
-					<option value="cs">Czech</option>
-					<option value="de">German</option>
-					<option value="ar">Arabic</option>
-					<option value="ja">Japanese</option>
-					<option value="sk">Slovak</option>
-					<option value="zh_CN">Chinese (Simplified)</option>
-					<option value="tr">Turkish</option>
-					<option value="fr">French</option>
-					<option value="es" selected>Spanish</option>
-					<option value="ru">Russian</option>
-					<option value="fi">Finnish</option>
-					<option value="pt_BR">Brazilian Portuguese</option>
-					<option value="zh_TW">Chinese (Taiwan)</option>
-					<option value="pl">Polish</option>
-					<option value="bg">Bulgarian</option>
-					<option value="hu">Hungarian</option>
-					<option value="ca">Catalan</option>
-					<option value="gl">Galician</option>
-					<option value="pt">Portuguese</option>
-					<option value="vi">Vietnamese</option>
-					<option value="id">Indonesian</option>
-					<option value="et">Estonian</option>
-					<option value="uk">Ukrainian</option>
-					<option value="sv">Swedish</option>
-					<option value="lt">Lithuanian</option>
-					<option value="sr">Serbian</option>
-					<option value="eo">Esperanto</option>
-					<option value="da">Danish</option>
-					<option value="ko">Korean</option>
-					<option value="la">Latin</option>
-					<option value="nl">Dutch</option>
-					<option value="gd">Scottish Gaelic</option>
-					<option value="el">Greek</option>
-					<option value="nb_NO">Norwegian</option>
-					<option value="en@shaw">English (Shavian characters)</option>
-					<option value="ga">Irish</option>
-					<option value="racv">RACV Language</option>
-					<option value="bn">Bengali</option>
-					<option value="lv">Latvian</option>
-					<option value="af">Afrikaans</option>
-					<option value="he">Hebrew</option>
-					<option value="is">Icelandic</option>
-					<option value="sl">Slovenian</option>
-					<option value="eu">Basque</option>
-					<option value="ang@latin">Old English (Latin characters)</option>
-					<option value="hr">Croatian</option>
-					<option value="ca_ES@valencia">Valencian (Southern Catalan)</option>
-					<option value="tl">Filipino</option>
-					<option value="grc">Ancient Greek</option>
-					<option value="mr">Marathi</option>
-					<option value="mk">Macedonian</option>
-					<option value="ro">Romanian</option>
-					<option value="cy">Welsh</option>
-					<option value="es_419">Spanish (Latin American)</option>
-					<option value="my">Burmese</option>
-                    </select>
-                </div>
-                <div class="dictionary-manager-form-row">
-                    <label for="dictionary-manager-wordCount" class="dictionary-manager-label">Extract by word count:</label>
-                    <select id="dictionary-manager-wordCount" class="dictionary-manager-select">
-                        <option value="1">Single word only</option>
-                        <option value="2">Two words only</option>
-                        <option value="both">Both single and two words</option>
-                    </select>
-                </div>
-                <div class="dictionary-manager-form-row">
-                    <label for="dictionary-manager-applyMode" class="dictionary-manager-label">Apply Mode:</label>
-                    <select id="dictionary-manager-applyMode" class="dictionary-manager-select">
-                        <option value="suggest">Suggest Modifications</option>
-                        <option value="auto">Auto-Apply Modifications</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <div class="dictionary-manager-section">
-            <h2 class="dictionary-manager-subtitle">Dictionary Actions</h2>
-            <div class="dictionary-manager-button-group">
-                <button id="dictionary-manager-processBtn" class="dictionary-manager-btn dictionary-manager-primary">Process Files</button>
-                <button id="dictionary-manager-downloadBtn" class="dictionary-manager-btn" disabled>Download Dictionary</button>
-                <button id="dictionary-manager-uploadDictBtn" class="dictionary-manager-btn">Upload Dictionary</button>
-                <input type="file" id="dictionary-manager-dictUploadInput" accept=".json" class="dictionary-manager-hidden">
-                <button id="dictionary-manager-saveDictBtn" class="dictionary-manager-btn">Save Dictionary</button>
-                <button id="dictionary-manager-clearDictBtn" class="dictionary-manager-btn dictionary-manager-danger">Clear Dictionary</button>
-            </div>
-        </div>
-
-        <div class="dictionary-manager-section">
-            <h2 class="dictionary-manager-subtitle">Dictionary Application</h2>
-            <div class="dictionary-manager-button-group">
-                <button id="dictionary-manager-applyDictBtn" class="dictionary-manager-btn dictionary-manager-primary">Apply Dictionary</button>
-                <button id="dictionary-manager-downloadModifiedBtn" class="dictionary-manager-btn" disabled>Download Modified .po</button>
-            </div>
-            <div id="dictionary-manager-applicationOutput" class="dictionary-manager-output">
-                <p>Modified .po content will appear here...</p>
-            </div>
-        </div>
-
-        <div class="dictionary-manager-section">
-            <h2 class="dictionary-manager-subtitle">Dictionary Output</h2>
-            <div id="dictionary-manager-dictionaryOutput" class="dictionary-manager-output">
-                <p>Processed dictionary entries will appear here...</p>
-            </div>
-        </div>
-        
-        <div id="dictionary-manager-status" class="dictionary-manager-status"></div>
-    </div>
-    
-    <script src="scripts/po_File_Dictionary_Extractor.js"></script>
-</body>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="stylesheet" href="styles/po_File_Dictionary_Extractor.css">
+		<title>.po File Dictionary Manager</title>
+	</head>
+	<body>
+		<div class="dictionary-manager-container">
+			<header class="dictionary-manager-header">
+				<h1 class="dictionary-manager-title">
+					<svg viewBox="0 0 24 24">
+						<path d="M0 0h24v24H0z" fill="none"/>
+						<path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.63 3.37 1.91 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.63-3.37-1.9-4.33-3.56zm2.95-8H5.08c.96-1.66 2.49-2.93 4.33-3.56C8.81 5.55 8.35 6.75 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2 0-.68.07-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-.96 1.65-2.49 2.93-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/>
+					</svg>
+					.po File Dictionary Manager
+				</h1>
+				<p class="dictionary-manager-description">
+					This tool helps you manage and translate .po files efficiently. 
+					Upload your .po files or paste content directly, then use the dictionary 
+					tools to extract, manage, and apply translations. All processing happens 
+					locally in your browser - no data is sent to any server.
+				</p>
+			</header>
+			
+			<main class="dictionary-manager-main">
+				<div class="dictionary-manager-section">
+					<h2 class="dictionary-manager-section-title">
+						<svg viewBox="0 0 24 24">
+							<path d="M0 0h24v24H0z" fill="none"/>
+							<path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+						</svg>
+						Load .po File
+					</h2>
+					
+					<div class="dictionary-manager-input-group">
+						<div class="dictionary-manager-input-box">
+<label class="dictionary-manager-label" for="dictionary-manager-fileInput">
+								<svg viewBox="0 0 24 24">
+									<path d="M0 0h24v24H0z" fill="none"/>
+									<path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+								</svg>
+								Upload .po File(s)
+							</label>
+							<input type="file" id="dictionary-manager-fileInput" multiple accept=".po" class="dictionary-manager-file-input">
+						</div>
+						
+						<div class="dictionary-manager-input-box">
+<label class="dictionary-manager-label" for="dictionary-manager-poContent">
+								<svg viewBox="0 0 24 24">
+									<path d="M0 0h24v24H0z" fill="none"/>
+									<path d="M19 2h-4.18C14.4.84 13.3 0 12 0c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm7 18H5V4h2v3h10V4h2v16z"/>
+								</svg>
+								Or Paste .po Content
+							</label>
+							<textarea id="dictionary-manager-poContent" placeholder="Paste .po file content here..." class="dictionary-manager-textarea"></textarea>
+						</div>
+					</div>
+					
+					<div class="dictionary-manager-input-group">
+						<div class="dictionary-manager-input-box">
+<label class="dictionary-manager-label" for="dictionary-manager-language">
+								<svg viewBox="0 0 24 24">
+									<path d="M0 0h24v24H0z" fill="none"/>
+									<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+								</svg>
+								Target Language
+							</label>
+							<select id="dictionary-manager-language" class="dictionary-manager-select">
+								<option value="en_GB">British English</option>
+								<option value="it">Italian</option>
+								<option value="cs">Czech</option>
+								<option value="de">German</option>
+								<option value="ar">Arabic</option>
+								<option value="ja">Japanese</option>
+								<option value="sk">Slovak</option>
+								<option value="zh_CN">Chinese (Simplified)</option>
+								<option value="tr">Turkish</option>
+								<option value="fr">French</option>
+								<option value="es" selected>Spanish</option>
+								<option value="ru">Russian</option>
+								<option value="fi">Finnish</option>
+								<option value="pt_BR">Brazilian Portuguese</option>
+								<option value="zh_TW">Chinese (Taiwan)</option>
+								<option value="pl">Polish</option>
+								<option value="bg">Bulgarian</option>
+								<option value="hu">Hungarian</option>
+								<option value="ca">Catalan</option>
+								<option value="gl">Galician</option>
+								<option value="pt">Portuguese</option>
+								<option value="vi">Vietnamese</option>
+								<option value="id">Indonesian</option>
+								<option value="et">Estonian</option>
+								<option value="uk">Ukrainian</option>
+								<option value="sv">Swedish</option>
+								<option value="lt">Lithuanian</option>
+								<option value="sr">Serbian</option>
+								<option value="eo">Esperanto</option>
+								<option value="da">Danish</option>
+								<option value="ko">Korean</option>
+								<option value="la">Latin</option>
+								<option value="nl">Dutch</option>
+								<option value="gd">Scottish Gaelic</option>
+								<option value="el">Greek</option>
+								<option value="nb_NO">Norwegian</option>
+								<option value="en@shaw">English (Shavian characters)</option>
+								<option value="ga">Irish</option>
+								<option value="racv">RACV Language</option>
+								<option value="bn">Bengali</option>
+								<option value="lv">Latvian</option>
+								<option value="af">Afrikaans</option>
+								<option value="he">Hebrew</option>
+								<option value="is">Icelandic</option>
+								<option value="sl">Slovenian</option>
+								<option value="eu">Basque</option>
+								<option value="ang@latin">Old English (Latin characters)</option>
+								<option value="hr">Croatian</option>
+								<option value="ca_ES@valencia">Valencian (Southern Catalan)</option>
+								<option value="tl">Filipino</option>
+								<option value="grc">Ancient Greek</option>
+								<option value="mr">Marathi</option>
+								<option value="mk">Macedonian</option>
+								<option value="ro">Romanian</option>
+								<option value="cy">Welsh</option>
+								<option value="es_419">Spanish (Latin American)</option>
+								<option value="my">Burmese</option>
+							</select>
+						</div>
+						
+						<div class="dictionary-manager-input-box">
+<label class="dictionary-manager-label" for="dictionary-manager-wordCount">
+								<svg viewBox="0 0 24 24">
+									<path d="M0 0h24v24H0z" fill="none"/>
+									<path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
+								</svg>
+								Processing Options
+							</label>
+							<select id="dictionary-manager-wordCount" class="dictionary-manager-select">
+								<option value="1">Single word only</option>
+								<option value="2">Two words only</option>
+								<option value="both">Both single and two words</option>
+							</select>
+						</div>
+					</div>
+				</div>
+				
+				<div class="dictionary-manager-tabs">
+					<button class="dictionary-manager-tab-btn active" data-tab="dictionary-management">
+						<svg viewBox="0 0 24 24">
+							<path d="M0 0h24v24H0z" fill="none"/>
+							<path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/>
+						</svg>
+						Dictionary Management
+					</button>
+					<button class="dictionary-manager-tab-btn" data-tab="po-file-management">
+						<svg viewBox="0 0 24 24">
+							<path d="M0 0h24v24H0z" fill="none"/>
+							<path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+						</svg>
+						PO File Management
+					</button>
+				</div>
+				
+				<div id="dictionary-management" class="dictionary-manager-tab-content active">
+					<h2 class="dictionary-manager-section-title">
+						<svg viewBox="0 0 24 24">
+							<path d="M0 0h24v24H0z" fill="none"/>
+							<path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+						</svg>
+						Dictionary Tools
+					</h2>
+					
+					<div class="dictionary-manager-button-group">
+						<button id="dictionary-manager-processBtn" class="dictionary-manager-btn dictionary-manager-btn-primary dictionary-manager-tooltip">
+							<svg viewBox="0 0 24 24">
+								<path d="M0 0h24v24H0z" fill="none"/>
+								<path d="M15.55 13c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.37-.66-.11-1.48-.87-1.48H5.21l-.94-2H1v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5.48 17 7 17h12v-2H7l1.1-2h7.45zM6.16 6h12.15l-2.76 5H8.53L6.16 6zM7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
+							</svg>
+							Process Files
+							<span class="dictionary-manager-tooltiptext">Extract dictionary entries from loaded .po files</span>
+						</button>
+						
+						<button id="dictionary-manager-downloadBtn" class="dictionary-manager-btn dictionary-manager-btn-secondary dictionary-manager-tooltip" disabled>
+							<svg viewBox="0 0 24 24">
+								<path d="M0 0h24v24H0z" fill="none"/>
+								<path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+							</svg>
+							Download Dictionary
+							<span class="dictionary-manager-tooltiptext">Download dictionary as JSON file</span>
+						</button>
+						
+						<button id="dictionary-manager-uploadDictBtn" class="dictionary-manager-btn dictionary-manager-btn-light dictionary-manager-tooltip">
+							<svg viewBox="0 0 24 24">
+								<path d="M0 0h24v24H0z" fill="none"/>
+								<path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
+							</svg>
+							Upload Dictionary
+							<span class="dictionary-manager-tooltiptext">Upload a previously saved dictionary</span>
+						</button>
+						
+						<button id="dictionary-manager-saveDictBtn" class="dictionary-manager-btn dictionary-manager-btn-light dictionary-manager-tooltip">
+							<svg viewBox="0 0 24 24">
+								<path d="M0 0h24v24H0z" fill="none"/>
+								<path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+							</svg>
+							Save Dictionary
+							<span class="dictionary-manager-tooltiptext">Save dictionary to browser storage</span>
+						</button>
+						
+						<button id="dictionary-manager-clearDictBtn" class="dictionary-manager-btn dictionary-manager-btn-danger dictionary-manager-tooltip">
+							<svg viewBox="0 0 24 24">
+								<path d="M0 0h24v24H0z" fill="none"/>
+								<path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+							</svg>
+							Clear Dictionary
+							<span class="dictionary-manager-tooltiptext">Remove all dictionary entries</span>
+						</button>
+					</div>
+					
+					<h3 class="dictionary-manager-section-title" style="font-size: 1.3rem;">
+						<svg viewBox="0 0 24 24">
+							<path d="M0 0h24v24H0z" fill="none"/>
+							<path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
+						</svg>
+						Dictionary Output
+					</h3>
+					<div id="dictionary-manager-dictionaryOutput" class="dictionary-manager-output">
+						<p>Processed dictionary entries will appear here...</p>
+					</div>
+				</div>
+				
+				<div id="po-file-management" class="dictionary-manager-tab-content">
+					<h2 class="dictionary-manager-section-title">
+						<svg viewBox="0 0 24 24">
+							<path d="M0 0h24v24H0z" fill="none"/>
+							<path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+						</svg>
+						.po File Tools
+					</h2>
+					
+					<div class="dictionary-manager-button-group">
+						<button id="dictionary-manager-applyDictBtn" class="dictionary-manager-btn dictionary-manager-btn-primary dictionary-manager-tooltip">
+							<svg viewBox="0 0 24 24">
+								<path d="M0 0h24v24H0z" fill="none"/>
+								<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+							</svg>
+							Apply Dictionary
+							<span class="dictionary-manager-tooltiptext">Apply dictionary to current .po file</span>
+						</button>
+						
+						<button id="dictionary-manager-downloadModifiedBtn" class="dictionary-manager-btn dictionary-manager-btn-secondary dictionary-manager-tooltip" disabled>
+							<svg viewBox="0 0 24 24">
+								<path d="M0 0h24v24H0z" fill="none"/>
+								<path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+							</svg>
+							Download Modified .po
+							<span class="dictionary-manager-tooltiptext">Download modified .po file</span>
+						</button>
+					</div>
+					
+					<div class="dictionary-manager-input-group">
+						<div class="dictionary-manager-input-box">
+<label class="dictionary-manager-label" for="dictionary-manager-applyMode">
+								<svg viewBox="0 0 24 24">
+									<path d="M0 0h24v24H0z" fill="none"/>
+									<path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
+								</svg>
+								Apply Mode
+							</label>
+							<select id="dictionary-manager-applyMode" class="dictionary-manager-select">
+								<option value="suggest">Suggest Modifications</option>
+								<option value="auto">Auto-Apply Modifications</option>
+							</select>
+						</div>
+					</div>
+					
+					<h3 class="dictionary-manager-section-title" style="font-size: 1.3rem;">
+						<svg viewBox="0 0 24 24">
+							<path d="M0 0h24v24H0z" fill="none"/>
+							<path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+						</svg>
+						Modified .po Output
+					</h3>
+					<div id="dictionary-manager-applicationOutput" class="dictionary-manager-output">
+						<p>Modified .po content will appear here...</p>
+					</div>
+				</div>
+				
+				<div id="dictionary-manager-status" class="dictionary-manager-status">
+					Ready to process .po files
+				</div>
+			</main>
+			
+			<footer class="dictionary-manager-footer">
+				<p>All processing happens locally in your browser - no data is sent to any server</p>
+				<p>.po File Dictionary Manager &copy; 2023</p>
+			</footer>
+		</div>
+		
+		<script src="scripts/po_File_Dictionary_Extractor.js"></script>
+	</body>
 </html>
