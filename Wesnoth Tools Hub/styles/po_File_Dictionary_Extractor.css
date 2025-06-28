@@ -414,13 +414,15 @@ body {
 
 
 .dictionary-manager-match {
-    padding: 15px;
-    margin-bottom: 20px;
+    padding: 8px; /* Reduced padding */
+    margin-bottom: 10px;
     background-color: white;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     border: 1px solid #e1e4e8;
     transition: all 0.2s ease;
+  display: table-row;
+  border-bottom: 1px solid #eee;
 }
 
 .dictionary-manager-match:hover {
@@ -429,11 +431,14 @@ body {
 }
 
 .dictionary-manager-match-header {
-    padding-bottom: 12px;
-    margin-bottom: 15px;
+    padding-bottom: 5px; /* Reduced spacing */
+    margin-bottom: 8px;
     border-bottom: 1px solid #eee;
     display: flex;
     align-items: center;
+  width: 25%;
+  font-weight: 600;
+  border-right: 1px solid #eee;
 }
 
 .dictionary-manager-match-header strong {
@@ -445,20 +450,33 @@ body {
 .dictionary-manager-match-options {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 15px;
+    gap: 8px;
 }
 
 @media (min-width: 768px) {
+    
+    .dictionary-manager-match-option {
+        flex: 1;
+        margin-bottom: 0;
+    }
     .dictionary-manager-match-options {
         grid-template-columns: repeat(3, 1fr);
+        display: flex;
+        gap: 10px;
+    }
+    
+    .dictionary-manager-match-option:nth-child(3) {
+        grid-column: span 3;
+        flex: 2; /* Give custom field more space */
     }
 }
 
 .dictionary-manager-match-option {
-    padding: 12px;
-    border-radius: 6px;
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
+    padding: 6px; /* Less internal padding */
+    margin-bottom: 5px;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
 }
 
 .dictionary-manager-match-option label {
@@ -475,26 +493,27 @@ body {
 }
 
 .dictionary-manager-match-value {
-    background: white;
-    padding: 10px;
-    border-radius: 4px;
-    border: 1px solid #ddd;
-    min-height: 60px;
+    min-height: 40px; /* Smaller value boxes */
+    padding: 5px; /* Less internal padding */
+    font-size: 0.9em;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
     overflow: auto;
-    font-size: 0.95rem;
     line-height: 1.4;
+  margin-top: 5px;
 }
 
 .dictionary-manager-custom-value {
-    width: 100%;
-    padding: 10px;
-    border-radius: 4px;
-    border: 1px solid #ddd;
     font-family: inherit;
     resize: vertical;
-    min-height: 60px;
-    margin-top: 5px;
-    font-size: 0.95rem;
+    min-height: 40px; /* Smaller text area */
+    padding: 5px; /* Less internal padding */
+    font-size: 0.9em;
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-top: 5px;
 }
 
 .dictionary-manager-custom-value:focus {
@@ -507,15 +526,188 @@ body {
     grid-column: span 1;
 }
 
-@media (min-width: 768px) {
-    .dictionary-manager-match-option:nth-child(3) {
-        grid-column: span 3;
-    }
-}
 
 #dictionary-manager-confirmBtn {
     margin-top: 20px;
     width: 100%;
     padding: 14px;
     font-size: 1.1rem;
+}
+/* Add to end of CSS file */
+.dictionary-manager-entry-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.dictionary-manager-entry-btn {
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.dictionary-manager-entry-save {
+    background-color: var(--secondary);
+    color: white;
+}
+
+.dictionary-manager-entry-delete {
+    background-color: var(--danger);
+    color: white;
+}
+
+.dictionary-manager-entry-edit {
+    background-color: var(--primary);
+    color: white;
+}
+
+.dictionary-manager-entry-value {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    min-height: 40px;
+    background: white;
+}
+
+.dictionary-manager-editable {
+    background-color: #fffde7;
+    border: 1px solid #ffd54f;
+}
+
+.dictionary-manager-edit-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 1rem;
+}
+
+.dictionary-manager-summary {
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+    font-weight: 500;
+}
+
+.dictionary-manager-merge-info {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #e3f2fd;
+    border-radius: 6px;
+    border: 1px solid #bbdefb;
+}
+.dictionary-manager-matches-container {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.dictionary-manager-match-header,
+.dictionary-manager-match-options {
+  display: table-cell;
+  padding: 8px 8px;
+  vertical-align: top;
+}
+
+
+.dictionary-manager-match-options {
+  width: 75%;
+}
+
+
+.dictionary-manager-match-option:last-child {
+  margin-bottom: 0;
+}
+.dictionary-manager-controls {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.dictionary-manager-search {
+  flex: 1;
+  min-width: 200px;
+  padding: 10px 15px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: var(--transition);
+}
+
+.dictionary-manager-search:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.2);
+}
+
+.dictionary-manager-filter {
+  padding: 10px 15px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-size: 1rem;
+  background: white;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.dictionary-manager-filter:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.2);
+}
+
+.dictionary-manager-entry-hidden {
+  display: none;
+}
+/* Add to end of CSS file */
+.dictionary-manager-subsection-title {
+  font-size: 1.3rem;
+  margin-top: 25px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--primary);
+}
+
+.dictionary-manager-suggestions-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.dictionary-manager-suggestions-table th {
+  background-color: var(--primary);
+  color: white;
+  text-align: left;
+  padding: 10px;
+}
+
+.dictionary-manager-suggestions-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.dictionary-manager-suggestions-table tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.dictionary-manager-suggestions-table tr:hover {
+  background-color: #e3f2fd;
+}
+
+/* Remove existing grid styles */
+.dictionary-manager-match-options {
+  display: block !important;
+  grid-template-columns: none !important;
+  gap: 0 !important;
+}
+
+.dictionary-manager-match-option:nth-child(3) {
+  grid-column: unset !important;
 }
