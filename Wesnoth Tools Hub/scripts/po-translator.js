@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const translationTableContainer = document.getElementById('translationTableContainer');
     const uploadInputBtn = document.getElementById('uploadInputBtn');
     const downloadOutputBtn = document.getElementById('downloadOutputBtn');
+const fuzzyAllBtn = document.getElementById('fuzzyAllBtn');
+const unfuzzyAllBtn = document.getElementById('unfuzzyAllBtn');
 
     /**
      * Sample PO file content for initial demonstration
@@ -66,6 +68,27 @@ msgstr[5] ""
         return;
     }
 
+fuzzyAllBtn.addEventListener('click', function() {
+    if (!window.currentMessages) {
+        alert('Please extract strings first');
+        return;
+    }
+    window.currentMessages.forEach(msg => {
+        if (!msg.isObsolete) msg.fuzzy = true;
+    });
+    refreshTranslationTable();
+});
+
+unfuzzyAllBtn.addEventListener('click', function() {
+    if (!window.currentMessages) {
+        alert('Please extract strings first');
+        return;
+    }
+    window.currentMessages.forEach(msg => {
+        msg.fuzzy = false;
+    });
+    refreshTranslationTable();
+});
     showLoading(true);
     setTimeout(() => {
         try {
@@ -827,6 +850,9 @@ function generateTranslatedPo(messages, metadata) {
                 output.push('msgstr "' + (msg.msgstr || '') + '"');
             }
         }
+if (msg.fuzzy && !msg.isObsolete) {
+    output.push('#, fuzzy');
+}
         output.push('');
     });
     
@@ -1013,4 +1039,11 @@ function escapeHtml(unsafe) {
  */
 function showLoading(show) {
     loadingIndicator.style.display = show ? 'flex' : 'none';
+}
+function refreshTranslationTable() {
+    if (!window.currentMessages) return;
+    displayExtractedStrings({
+        messages: window.currentMessages,
+        metadata: window.currentMetadata
+    }, true);
 }
