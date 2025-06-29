@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="stylesheet" href="styles/wesnoth_image_manager.css">
+    <title>Wesnoth Image Manager</title>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Wesnoth Image Manager</h1>
+            <p class="subtitle">Manage and organize your Battle for Wesnoth game assets</p>
+            <div class="tooltip">
+                <button class="btn btn-help" id="help-btn">How to Use</button>
+                <span class="tooltiptext">Show instructions for using the image manager</span>
+            </div>
+        </header>
+        
+        <div class="feature-controls">
+            <div class="control-group">
+                <label for="organization-method">Organize By:</label>
+                <select id="organization-method">
+                    <option value="folder">Source Folder</option>
+                    <option value="size">File Size</option>
+                    <option value="date">Creation Date</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>Preview Size:</label>
+                <div class="size-buttons">
+                    <button class="size-btn active" data-size="small">Small</button>
+                    <button class="size-btn" data-size="medium">Medium</button>
+                    <button class="size-btn" data-size="large">Large</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="path-input-container">
+                <div class="path-display" id="directory-path-display">
+                    No directories selected
+                </div>
+                <div class="tooltip">
+                    <button class="btn btn-add" id="choose-directory">Add Directory</button>
+                    <span class="tooltiptext">Select a directory containing Wesnoth images</span>
+                </div>
+            </div>
+            
+            <div id="directories-list" class="directory-list" style="display: none;">
+                <!-- Directories will be listed here -->
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="loading-progress"></div>
+            </div>
+            
+            <div class="btn-group">
+                <div class="tooltip">
+                    <button class="btn" id="clear-all">Clear All</button>
+                    <span class="tooltiptext">Remove all directories and images</span>
+                </div>
+                <div class="tooltip">
+                    <button class="btn" id="sample-data">Load Sample Data</button>
+                    <span class="tooltiptext">Load sample Wesnoth images for demonstration</span>
+                </div>
+            </div>
+            
+            <div class="status-bar">
+                <div id="status-message">Ready to load images</div>
+                <div id="image-count">0 images loaded</div>
+            </div>
+        </div>
+        
+        <div id="directories-container">
+            <div class="empty-state">
+                <h3>No directories added yet</h3>
+                <p>Add directories containing your Wesnoth game images using the button above. Images will be displayed here organized by directory.</p>
+                <p>You can then copy their paths for use in game configuration files.</p>
+                <div class="tooltip">
+                    <button class="btn btn-add" id="load-sample">Load Sample Wesnoth Images</button>
+                    <span class="tooltiptext">Load sample Wesnoth images for demonstration</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="help-section">
+            <h3>How to Use the Wesnoth Image Manager</h3>
+            <div class="help-content">
+                <ol>
+                    <li><strong>Add Directories</strong>: Click the "Add Directory" button to select folders containing your Wesnoth images. You can add multiple directories.</li>
+                    <li><strong>Manage Images</strong>: Images will be displayed in a grid. Click any image to view it in a larger view with tools.</li>
+                    <li><strong>Edit Images</strong>: In the lightbox view, click "Modify Image" to open the image editor with various modification tools.</li>
+                    <li><strong>Copy Paths</strong>: Click the "Copy Path" button below any image to copy its relative path to your clipboard for use in game configuration files.</li>
+                    <li><strong>Remove Directories</strong>: Use the "Remove" button on a directory card to remove it, or "Clear All" to remove everything.</li>
+                    <li><strong>Sample Data</strong>: Use the "Load Sample Data" button to see how the manager works with example images.</li>
+                    <li><strong>Configuration</strong>: Use copied image paths in your Wesnoth configuration files like: 
+                        <br><code>image="units/elves-archer/elvish-archer.png"</code></li>
+                </ol>
+                <p>Note: This tool runs entirely in your browser. No images are uploaded to any server.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification">
+        <span>Path copied to clipboard!</span>
+    </div>
+    
+    <!-- Lightbox element -->
+    <div class="lightbox" id="lightbox">
+        <button class="lightbox-close" id="lightbox-close">×</button>
+        <div class="lightbox-content">
+            <div class="lightbox-image-container">
+                <img id="lightbox-image" class="lightbox-image" src="" alt="">
+            </div>
+            <div class="lightbox-toolbar">
+                <div class="lightbox-header">
+                    <div class="lightbox-title" id="lightbox-title"></div>
+                    <div class="lightbox-path" id="lightbox-path"></div>
+                </div>
+                
+                <div class="lightbox-buttons">
+                    <button class="lightbox-btn copy" id="lightbox-copy">
+                        <span>📋</span> Copy Path
+                    </button>
+                    <button class="lightbox-btn download" id="lightbox-download">
+                        <span>⬇️</span> Download Image
+                    </button>
+                    <button class="lightbox-btn modify" id="lightbox-modify">
+                        <span>✏️</span> Modify Image
+                    </button>
+                    <button class="lightbox-btn close" id="lightbox-close-btn">
+                        <span>✕</span> Close
+                    </button>
+                </div>
+                
+                <div class="lightbox-info">
+                    <div class="lightbox-info-item">
+                        <span class="lightbox-info-label">Dimensions:</span>
+                        <span id="lightbox-dimensions">N/A</span>
+                    </div>
+                    <div class="lightbox-info-item">
+                        <span class="lightbox-info-label">Size:</span>
+                        <span id="lightbox-size">N/A</span>
+                    </div>
+                    <div class="lightbox-info-item">
+                        <span class="lightbox-info-label">Modified:</span>
+                        <span id="lightbox-modified">N/A</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Editor modal -->
+    <div class="editor-modal" id="editor-modal">
+        <div class="editor-container">
+            <div class="editor-header">
+                <h2 class="editor-title">Image Editor</h2>
+                <button class="editor-close" id="editor-close">×</button>
+            </div>
+            <div class="editor-content">
+                <div class="editor-tools">
+                    <div class="editor-tool-group">
+                        <h3>Adjustments</h3>
+                        <button class="tool-button" data-tool="brightness">Brightness</button>
+                        <button class="tool-button" data-tool="contrast">Contrast</button>
+                        <button class="tool-button" data-tool="saturation">Saturation</button>
+                        
+                        <div class="tool-control" id="brightness-control" style="display: none;">
+                            <label class="tool-label">Brightness: <span id="brightness-value">100</span>%</label>
+                            <input type="range" min="0" max="200" value="100" class="tool-slider" id="brightness-slider">
+                        </div>
+                        
+                        <div class="tool-control" id="contrast-control" style="display: none;">
+                            <label class="tool-label">Contrast: <span id="contrast-value">100</span>%</label>
+                            <input type="range" min="0" max="200" value="100" class="tool-slider" id="contrast-slider">
+                        </div>
+                        
+                        <div class="tool-control" id="saturation-control" style="display: none;">
+                            <label class="tool-label">Saturation: <span id="saturation-value">100</span>%</label>
+                            <input type="range" min="0" max="200" value="100" class="tool-slider" id="saturation-slider">
+                        </div>
+                    </div>
+                    
+                    <div class="editor-tool-group">
+                        <h3>Filters</h3>
+                        <button class="tool-button" data-filter="none">None</button>
+                        <button class="tool-button" data-filter="grayscale">Grayscale</button>
+                        <button class="tool-button" data-filter="sepia">Sepia</button>
+                        <button class="tool-button" data-filter="invert">Invert Colors</button>
+                    </div>
+                    
+                    <div class="editor-tool-group">
+                        <h3>Transform</h3>
+                        <button class="tool-button" data-transform="rotate-left">Rotate Left</button>
+                        <button class="tool-button" data-transform="rotate-right">Rotate Right</button>
+                        <button class="tool-button" data-transform="flip-h">Flip Horizontal</button>
+                        <button class="tool-button" data-transform="flip-v">Flip Vertical</button>
+                    </div>
+                </div>
+                <div class="editor-preview">
+                    <div class="editor-canvas-container">
+                        <canvas id="editor-canvas" class="editor-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="editor-footer">
+                <button class="editor-btn cancel" id="editor-cancel">Cancel</button>
+                <button class="editor-btn save" id="editor-save">Save Changes</button>
+            </div>
+        </div>
+    </div>
+    
+		<script src="scripts/wesnoth_image_manager.js"></script>
+</body>
+</html>

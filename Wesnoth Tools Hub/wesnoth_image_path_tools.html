@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="stylesheet" href="styles/wesnoth_image_path_tools.css">
+		<title>Wesnoth Image Path Tools</title>
+	</head>
+	<body>
+		<div class="imag-tools-container">
+			<header class="imag-tools-header">
+				<h1 class="imag-tools-title">Wesnoth Image Path Tools</h1>
+			</header>
+			
+			<div class="imag-tools-help-section">
+				<div class="imag-tools-help-header">
+					<div class="imag-tools-help-title">How to Use</div>
+					<button class="imag-tools-btn" id="imag-tools-toggle-help">-</button>
+				</div>
+				<div class="imag-tools-help-content" id="imag-tools-help-content">
+					<ol>
+						<li><strong>Add Image Directory</strong>: Click the "Add Directory" button to select folders containing your Wesnoth images.</li>
+						<li><strong>Browse Images</strong>: Images will be displayed in a grid.</li>
+						<li><strong>Select Images</strong>: Click the "Select" button below any image to add it to your selection.</li>
+						<li><strong>View Selected</strong>: Click the "View Selected" button to see all selected images in a lightbox.</li>
+						<li><strong>Lightbox Features</strong>: 
+							<ul>
+								<li>View image path at the top</li>
+								<li>Adjust zoom and rotation in the sidebar</li>
+								<li>Navigate through selected images using arrows or thumbnails</li>
+								<li>Switch between single image and grid view modes</li>
+							</ul>
+						</li>
+					</ol>
+				</div>
+			</div>
+			
+			<div class="imag-tools-display-options">
+				<div class="imag-tools-option-group">
+					<label for="imag-tools-display-mode">Display Mode:</label>
+					<select id="imag-tools-display-mode">
+						<option value="grid">Grid View</option>
+					</select>
+				</div>
+			</div>
+			
+			<div class="imag-tools-controls">
+				<button class="imag-tools-btn imag-tools-btn-add" id="imag-tools-choose-directory">Add Directory</button>
+			</div>
+			
+			<div id="imag-tools-images-display" class="imag-tools-images-container">
+				<div class="imag-tools-empty-state">
+					<h3>No images loaded yet</h3>
+					<p>Add directories containing your Wesnoth game images using the button above.</p>
+				</div>
+			</div>
+			
+			<div class="imag-tools-selected-box">
+				<button class="imag-tools-btn imag-tools-btn-add" id="imag-tools-view-selected">View Selected Images</button>
+			</div>
+		</div>
+		
+		<div id="imag-tools-lightbox" class="imag-tools-lightbox" style="display: none;">
+			
+			<div class="imag-tools-lightbox-header">
+				<div id="imag-tools-lightbox-path" class="imag-tools-lightbox-path">
+					<span id="imag-tools-lightbox-mode-indicator"></span>
+					<span id="imag-tools-lightbox-image-path"></span>
+				</div>
+				<span class="imag-tools-lightbox-close">&times;</span>
+			</div>
+			
+			<div class="imag-tools-lightbox-content">
+				<img id="imag-tools-lightbox-img" class="imag-tools-lightbox-image">
+				<a class="imag-tools-lightbox-nav imag-tools-lightbox-prev">&#10094;</a>
+				<a class="imag-tools-lightbox-nav imag-tools-lightbox-next">&#10095;</a>
+				
+				<!-- Grid view container -->
+				<div id="imag-tools-lightbox-grid-container" class="imag-tools-lightbox-grid-container"></div>
+			</div>
+			
+			<div class="imag-tools-lightbox-sidebar">
+				<div class="imag-tools-lightbox-options-title">View Options</div>
+				
+				<!-- View mode selector -->
+				<div class="imag-tools-lightbox-option">
+					<label for="imag-tools-lightbox-view-mode">View Mode:</label>
+					<select id="imag-tools-lightbox-view-mode">
+						<option value="single">Single Image</option>
+						<option value="all">All Selected Images</option>
+					</select>
+				</div>
+				
+				<div class="imag-tools-lightbox-option">
+					<label for="imag-tools-lightbox-zoom">Zoom Level:</label>
+					<select id="imag-tools-lightbox-zoom">
+						<option value="contain">Fit to Screen</option>
+						<option value="100">100%</option>
+						<option value="150">150%</option>
+						<option value="200">200%</option>
+					</select>
+				</div>
+				
+				<div class="imag-tools-lightbox-option">
+					<label for="imag-tools-lightbox-rotation">Rotation:</label>
+					<select id="imag-tools-lightbox-rotation">
+						<option value="0">0°</option>
+						<option value="90">90°</option>
+						<option value="180">180°</option>
+						<option value="270">270°</option>
+					</select>
+				</div>
+				
+				<div class="imag-tools-selected-list">
+					<div class="imag-tools-lightbox-options-title">Selected Images</div>
+					<div id="imag-tools-selected-items" class="imag-tools-selected-items-container"></div>
+				</div>
+				<div class="imag-tools-lightbox-option">
+					<div class="imag-tools-lightbox-options-title">Image Path Functions</div>
+					<div class="imag-tools-function-buttons">
+						<button class="imag-tools-func-btn" data-sample="~ADJUST_ALPHA(128)" title="Adjusts image transparency">ADJUST_ALPHA</button>
+						<button class="imag-tools-func-btn" data-sample="~BL()" title="Adds black outline to team-colored parts">BL</button>
+						<button class="imag-tools-func-btn" data-sample="~BLIT(units/knight.png,12,18)" title="Composites image onto another">BLIT</button>
+						<button class="imag-tools-func-btn" data-sample="~BRIGHTEN(40)" title="Adjusts image brightness">BRIGHTEN</button>
+						<button class="imag-tools-func-btn" data-sample="~CONTRAST(1.5)" title="Adjusts image contrast">CONTRAST</button>
+						<button class="imag-tools-func-btn" data-sample="~CROP(10,15,80,120)" title="Extracts rectangular region">CROP</button>
+						<button class="imag-tools-func-btn" data-sample="~CS(220,180,100)" title="Recolors via RGB multipliers">CS</button>
+						<button class="imag-tools-func-btn" data-sample="~FL(1,0)" title="Flips horizontally/vertically">FL</button>
+						<button class="imag-tools-func-btn" data-sample="~GS()" title="Converts to grayscale">GS</button>
+						<button class="imag-tools-func-btn" data-sample="~NEG()" title="Inverts colors (negative)">NEG</button>
+						<button class="imag-tools-func-btn" data-sample="~O(0.7)" title="Sets opacity">O</button>
+						<button class="imag-tools-func-btn" data-sample="~R(45)" title="Rotates clockwise">R</button>
+						<button class="imag-tools-func-btn" data-sample="~RC(0,255,255)" title="Recolors non-transparent pixels">RC</button>
+						<button class="imag-tools-func-btn" data-sample="~SCALE(150,200)" title="Resizes to dimensions">SCALE</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script src="scripts/wesnoth_image_path_tools.js"></script>
+<script src="scripts/images_advanced_tools.js"></script>
+		
+	</body>
+</html>
