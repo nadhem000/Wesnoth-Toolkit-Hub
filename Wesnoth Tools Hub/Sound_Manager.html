@@ -1,0 +1,1971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wesnoth Sound Manager</title>
+    <style>
+        :root {
+            --primary-color: #3a5a40;
+            --secondary-color: #588157;
+            --accent-color: #a3b18a;
+            --light-color: #dad7cd;
+            --dark-color: #344e41;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a2c0f 0%, #2a4530 100%);
+            color: var(--light-color);
+            padding: 20px;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: rgba(44, 62, 33, 0.85);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border: 1px solid var(--accent-color);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--accent-color);
+            position: relative;
+        }
+
+        h1 {
+            color: var(--accent-color);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .controls {
+            background-color: rgba(44, 62, 33, 0.95);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid var(--primary-color);
+        }
+
+        .path-input-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .path-display {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid var(--secondary-color);
+            border-radius: 4px;
+            background-color: rgba(240, 240, 224, 0.1);
+            color: var(--light-color);
+            font-size: 1rem;
+            min-height: 46px;
+            display: flex;
+            align-items: center;
+            word-break: break-all;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            position: relative;
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-add {
+            background-color: var(--accent-color);
+            color: var(--dark-color);
+        }
+
+        .btn-add:hover {
+            background-color: #e8d067;
+        }
+
+        .btn-copy {
+            background-color: #5a8c3c;
+        }
+
+        .btn-copy:hover {
+            background-color: #6da34a;
+        }
+
+        .btn-remove {
+            background-color: #a33c3c;
+        }
+
+        .btn-remove:hover {
+            background-color: #c04a4a;
+        }
+
+        .btn-help {
+            background-color: #3c6a8c;
+        }
+
+        .btn-help:hover {
+            background-color: #4a82b0;
+        }
+
+        .directory-container {
+            background-color: rgba(44, 62, 33, 0.8);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 25px;
+            border: 1px solid var(--secondary-color);
+        }
+
+        .directory-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--secondary-color);
+        }
+
+        .directory-title {
+            font-size: 1.3rem;
+            color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .directory-title::before {
+            content: "📁";
+            font-size: 1.2rem;
+        }
+
+        .sound-count {
+            background-color: var(--primary-color);
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+        }
+
+        .sounds-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .sound-card {
+            background: linear-gradient(135deg, #3a5a1f 0%, #2c3e21 100%);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #5a7c3f;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .sound-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+            border-color: var(--accent-color);
+        }
+
+        .sound-preview {
+            padding: 15px;
+            background-color: #1a2c0f;
+            border-bottom: 1px solid #5a7c3f;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sound-info {
+            padding: 12px;
+        }
+
+        .sound-name {
+            font-weight: bold;
+            margin-bottom: 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--accent-color);
+        }
+
+        .sound-path {
+            font-size: 0.8rem;
+            color: #a0b090;
+            margin-bottom: 12px;
+            height: 40px;
+            overflow: hidden;
+            word-break: break-all;
+        }
+
+        .sound-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .sound-controls .btn {
+            flex: 1;
+            padding: 8px;
+            font-size: 0.85rem;
+        }
+
+        .no-sounds {
+            text-align: center;
+            padding: 40px;
+            font-style: italic;
+            color: #a0b090;
+            grid-column: 1 / -1;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transform: translateX(200%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #a0b090;
+        }
+
+        .empty-state h3 {
+            color: var(--accent-color);
+            margin-bottom: 15px;
+        }
+
+        .empty-state p {
+            max-width: 600px;
+            margin: 0 auto 20px;
+            line-height: 1.6;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--accent-color);
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--secondary-color);
+            color: #a0b090;
+            font-size: 0.9rem;
+        }
+
+        .progress-container {
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            margin: 10px 0;
+            overflow: hidden;
+            height: 8px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--accent-color);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 160px;
+            background-color: var(--dark-color);
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--dark-color) transparent transparent transparent;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .help-section {
+            background-color: rgba(44, 62, 33, 0.8);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid var(--accent-color);
+        }
+
+        .help-section h3 {
+            color: var(--accent-color);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .help-section h3::before {
+            content: "❓";
+        }
+
+        .help-content {
+            line-height: 1.6;
+        }
+
+        .help-content ol {
+            padding-left: 20px;
+            margin: 15px 0;
+        }
+
+        .help-content li {
+            margin-bottom: 10px;
+        }
+
+        .help-content code {
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .directory-list {
+            background-color: rgba(30, 45, 20, 0.7);
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .directory-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid rgba(125, 156, 92, 0.3);
+        }
+
+        .directory-item:last-child {
+            border-bottom: none;
+        }
+
+        .directory-item-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding-right: 10px;
+        }
+
+        .remove-directory-btn {
+            background: none;
+            border: none;
+            color: #d88a8a;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 2px 5px;
+            transition: color 0.2s;
+        }
+
+        .remove-directory-btn:hover {
+            color: #ff9999;
+        }
+
+        .feature-controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: rgba(30, 45, 20, 0.5);
+            border-radius: 8px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        .control-group select, .control-group input {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid var(--secondary-color);
+            background-color: rgba(240, 240, 224, 0.1);
+            color: var(--light-color);
+        }
+
+        .edit-name-input {
+            width: 100%;
+            padding: 5px;
+            background-color: rgba(0, 0, 0, 0.2);
+            color: var(--light-color);
+            border: 1px solid var(--accent-color);
+            border-radius: 4px;
+            font-size: 0.95rem;
+        }
+
+        .sound-name-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .edit-name-btn {
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            cursor: pointer;
+            font-size: 0.9rem;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .edit-name-btn:hover {
+            opacity: 1;
+        }
+
+        .audio-player {
+            width: 100%;
+            background: rgba(30, 45, 20, 0.5);
+            border-radius: 4px;
+            padding: 8px;
+        }
+
+        .audio-player audio {
+            width: 100%;
+        }
+
+        .sound-info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.85rem;
+        }
+
+        .sound-info-label {
+            font-weight: bold;
+            color: var(--accent-color);
+            min-width: 100px;
+        }
+
+        .sound-info-value {
+            flex: 1;
+            text-align: right;
+        }
+
+        /* NEW: Lightbox Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #2c3e21 0%, #344e41 100%);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+            border: 2px solid var(--accent-color);
+            position: relative;
+            padding: 25px;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--accent-color);
+        }
+
+        .modal-title {
+            color: var(--accent-color);
+            font-size: 1.8rem;
+            margin: 0;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--light-color);
+            font-size: 1.8rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .close-modal:hover {
+            color: var(--accent-color);
+        }
+
+        .modal-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 768px) {
+            .modal-body {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .modal-sound-info {
+            background-color: rgba(30, 45, 20, 0.5);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .modal-sound-path {
+            word-break: break-all;
+            padding: 12px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        .sound-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .sound-info-item {
+            margin-bottom: 12px;
+        }
+
+        .sound-info-label {
+            font-weight: bold;
+            color: var(--accent-color);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .sound-info-value {
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .modal-audio-player {
+            background-color: rgba(30, 45, 20, 0.5);
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .audio-player-large {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .audio-player-large audio {
+            width: 100%;
+        }
+
+        .modal-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .modal-controls {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--secondary-color);
+        }
+
+        .modal-controls h4 {
+            color: var(--accent-color);
+            margin-bottom: 15px;
+        }
+
+        .modal-form-group {
+            margin-bottom: 15px;
+        }
+
+        .modal-form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .modal-form-group input,
+        .modal-form-group select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid var(--secondary-color);
+            background-color: rgba(240, 240, 224, 0.1);
+            color: var(--light-color);
+        }
+
+        .modal-form-group input:focus,
+        .modal-form-group select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .btn-save {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-save:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        .advanced-controls {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--secondary-color);
+        }
+        
+        .advanced-controls h4 {
+            color: var(--accent-color);
+            margin-bottom: 15px;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .slider-container label {
+            min-width: 100px;
+            margin-right: 10px;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+        
+        .slider-container input[type="range"] {
+            flex: 1;
+        }
+        
+        .slider-value {
+            min-width: 40px;
+            text-align: right;
+        }
+        
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .checkbox-container label {
+            margin-left: 8px;
+            color: var(--accent-color);
+        }
+        @media (max-width: 768px) {
+            .sounds-grid {
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            }
+            
+            .path-input-container {
+                flex-direction: column;
+            }
+            
+            .feature-controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sounds-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            .btn {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+            
+            .help-section {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Wesnoth Sound Manager</h1>
+            <p class="subtitle">Manage and organize your Battle for Wesnoth game audio assets</p>
+            <div class="tooltip">
+                <button class="btn btn-help" id="help-btn">How to Use</button>
+                <span class="tooltiptext">Show instructions for using the sound manager</span>
+            </div>
+        </header>
+        
+        <div class="feature-controls">
+            <div class="control-group">
+                <label for="organization-method">Organize By:</label>
+                <select id="organization-method">
+                    <option value="folder">Source Folder</option>
+                    <option value="type">Sound Type</option>
+                    <option value="size">File Size</option>
+                    <option value="date">Creation Date</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="sound-filter">Filter by Type:</label>
+                <select id="sound-filter">
+                    <option value="all">All Sounds</option>
+                    <option value="effects">Sound Effects</option>
+                    <option value="music">Music</option>
+                    <option value="voices">Voice Acting</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="path-input-container">
+                <div class="path-display" id="directory-path-display">
+                    No directories selected
+                </div>
+                <div class="tooltip">
+                    <button class="btn btn-add" id="choose-directory">Add Directory</button>
+                    <span class="tooltiptext">Select a directory containing Wesnoth sounds</span>
+                </div>
+            </div>
+            
+            <div id="directories-list" class="directory-list" style="display: none;">
+                <!-- Directories will be listed here -->
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="loading-progress"></div>
+            </div>
+            
+            <div class="btn-group">
+                <div class="tooltip">
+                    <button class="btn" id="clear-all">Clear All</button>
+                    <span class="tooltiptext">Remove all directories and sounds</span>
+                </div>
+                <div class="tooltip">
+                    <button class="btn" id="sample-data">Load Sample Data</button>
+                    <span class="tooltiptext">Load sample Wesnoth sounds for demonstration</span>
+                </div>
+            </div>
+            
+            <div class="status-bar">
+                <div id="status-message">Ready to load sounds</div>
+                <div id="sound-count">0 sounds loaded</div>
+            </div>
+        </div>
+        
+        <div id="directories-container">
+            <div class="empty-state">
+                <h3>No directories added yet</h3>
+                <p>Add directories containing your Wesnoth game sounds using the button above. Sounds will be displayed here organized by directory.</p>
+                <p>You can then copy their paths for use in game configuration files.</p>
+                <div class="tooltip">
+                    <button class="btn btn-add" id="load-sample">Load Sample Wesnoth Sounds</button>
+                    <span class="tooltiptext">Load sample Wesnoth sounds for demonstration</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="help-section">
+            <h3>How to Use the Wesnoth Sound Manager</h3>
+            <div class="help-content">
+                <ol>
+                    <li><strong>Add Directories</strong>: Click the "Add Directory" button to select folders containing your Wesnoth sounds. You can add multiple directories.</li>
+                    <li><strong>Manage Sounds</strong>: Sounds will be displayed in a grid. Click any sound to preview it.</li>
+                    <li><strong>Copy Paths</strong>: Click the "Copy Path" button below any sound to copy its relative path to your clipboard for use in game configuration files.</li>
+                    <li><strong>Remove Directories</strong>: Use the "Remove" button on a directory card to remove it, or "Clear All" to remove everything.</li>
+                    <li><strong>Sample Data</strong>: Use the "Load Sample Data" button to see how the manager works with example sounds.</li>
+                    <li><strong>Configuration</strong>: Use copied sound paths in your Wesnoth configuration files like: 
+                        <br><code>sound="sounds/weapons/sword.ogg"</code></li>
+                </ol>
+                <p>Note: This tool runs entirely in your browser. No sounds are uploaded to any server.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification">
+        <span>Path copied to clipboard!</span>
+    </div>
+    
+    <!-- NEW: Sound Modal -->
+    <div class="modal-overlay" id="sound-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Sound Details</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="modal-sound-info">
+                    <div class="modal-sound-path" id="modal-sound-path"></div>
+                    
+                    <div class="sound-info-grid">
+                        <div class="sound-info-item">
+                            <span class="sound-info-label">Name:</span>
+                            <div class="sound-info-value" id="modal-sound-name"></div>
+                        </div>
+                        
+                        <div class="sound-info-item">
+                            <span class="sound-info-label">Type:</span>
+                            <div class="sound-info-value" id="modal-sound-type"></div>
+                        </div>
+                        
+                        <div class="sound-info-item">
+                            <span class="sound-info-label">Size:</span>
+                            <div class="sound-info-value" id="modal-sound-size"></div>
+                        </div>
+                        
+                        <div class="sound-info-item">
+                            <span class="sound-info-label">Format:</span>
+                            <div class="sound-info-value" id="modal-sound-format"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button class="btn btn-copy" id="modal-copy-path">Copy Path</button>
+                        <button class="btn btn-download" id="modal-download">Download</button>
+                    </div>
+                </div>
+                
+                <div class="modal-audio-player">
+                    <div class="audio-player-large">
+                        <audio controls id="modal-audio"></audio>
+                    </div>
+                    
+                    <div class="modal-controls">
+                        <h4>Sound Settings</h4>
+                        
+                        <div class="modal-form-group">
+                            <label for="volume-control">Volume:</label>
+                            <input type="range" id="volume-control" min="0" max="1" step="0.05" value="1">
+                        </div>
+                        
+                        <div class="modal-form-group">
+                            <label for="playback-speed">Playback Speed:</label>
+                            <select id="playback-speed">
+                                <option value="0.5">0.5x</option>
+                                <option value="0.75">0.75x</option>
+                                <option value="1" selected>Normal</option>
+                                <option value="1.25">1.25x</option>
+                                <option value="1.5">1.5x</option>
+                                <option value="2">2x</option>
+                            </select>
+                        </div>
+                        
+                <!-- NEW: Advanced sound processing controls -->
+                <div class="advanced-controls">
+                    <h4>Advanced Processing</h4>
+                    
+                    <div class="modal-form-group">
+                        <label for="pitch-shift">Pitch Shift:</label>
+                        <input type="range" id="pitch-shift" min="0.5" max="2.0" step="0.1" value="1.0">
+                        <span id="pitch-value">1.0x</span>
+                    </div>
+                    
+                    <div class="modal-form-group">
+                        <label for="bass-boost">Bass Boost:</label>
+                        <input type="range" id="bass-boost" min="0" max="100" step="5" value="0">
+                        <span id="bass-value">0%</span>
+                    </div>
+                    
+                    <div class="modal-form-group">
+                        <label for="treble-boost">Treble Boost:</label>
+                        <input type="range" id="treble-boost" min="0" max="100" step="5" value="0">
+                        <span id="treble-value">0%</span>
+                    </div>
+                    
+                    <div class="modal-form-group">
+                        <label for="reverb">Reverb:</label>
+                        <input type="range" id="reverb" min="0" max="100" step="5" value="0">
+                        <span id="reverb-value">0%</span>
+                    </div>
+                    
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="normalize">
+                        <label for="normalize">Normalize Volume</label>
+                    </div>
+                    
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="reverse">
+                        <label for="reverse">Reverse Sound</label>
+                    </div>
+                </div>
+                        <button class="btn btn-save" id="save-changes">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const directoryPathDisplay = document.getElementById('directory-path-display');
+            const chooseDirectoryBtn = document.getElementById('choose-directory');
+            const clearAllBtn = document.getElementById('clear-all');
+            const sampleDataBtn = document.getElementById('sample-data');
+            const loadSampleBtn = document.getElementById('load-sample');
+            const directoriesContainer = document.getElementById('directories-container');
+            const directoriesList = document.getElementById('directories-list');
+            const notification = document.getElementById('notification');
+            const statusMessage = document.getElementById('status-message');
+            const soundCount = document.getElementById('sound-count');
+            const progressBar = document.getElementById('loading-progress');
+            const helpBtn = document.getElementById('help-btn');
+            const organizationMethod = document.getElementById('organization-method');
+            const soundFilter = document.getElementById('sound-filter');
+            // NEW: Sound Modal Elements
+            const soundModal = document.getElementById('sound-modal');
+            const closeModalBtn = document.querySelector('.close-modal');
+            const modalSoundPath = document.getElementById('modal-sound-path');
+            const modalSoundName = document.getElementById('modal-sound-name');
+            const modalSoundType = document.getElementById('modal-sound-type');
+            const modalSoundSize = document.getElementById('modal-sound-size');
+            const modalSoundFormat = document.getElementById('modal-sound-format');
+            const modalAudio = document.getElementById('modal-audio');
+            const modalCopyPathBtn = document.getElementById('modal-copy-path');
+            const modalDownloadBtn = document.getElementById('modal-download');
+            const volumeControl = document.getElementById('volume-control');
+            const playbackSpeed = document.getElementById('playback-speed');
+            const saveChangesBtn = document.getElementById('save-changes');
+            
+            // State
+            let directories = [];
+            let soundExtensions = ['ogg', 'wav', 'mp3'];
+            let currentOrganization = 'folder';
+            let currentFilter = 'all';
+            let editableNames = {};
+            // Currently selected sound
+            let currentSound = null;
+            
+            // Update status message
+            function updateStatus(message, count = null) {
+                statusMessage.textContent = message;
+                if (count !== null) {
+                    soundCount.textContent = `${count} sounds loaded`;
+                }
+            }
+            
+            // Update progress bar
+            function updateProgress(percent) {
+                progressBar.style.width = `${percent}%`;
+            }
+            
+            // Update directory display
+            function updateDirectoryDisplay() {
+                if (directories.length === 0) {
+                    directoryPathDisplay.textContent = "No directories selected";
+                    directoriesList.style.display = 'none';
+                    return;
+                }
+                
+                if (directories.length === 1) {
+                    directoryPathDisplay.textContent = directories[0].name;
+                    directoriesList.style.display = 'none';
+                } else {
+                    directoryPathDisplay.textContent = `${directories.length} directories selected`;
+                    directoriesList.style.display = 'block';
+                    
+                    // Update directories list
+                    directoriesList.innerHTML = '';
+                    directories.forEach(dir => {
+                        const dirItem = document.createElement('div');
+                        dirItem.className = 'directory-item';
+                        dirItem.innerHTML = `
+                            <div class="directory-item-name">${dir.name}</div>
+                            <button class="remove-directory-btn" data-id="${dir.id}">×</button>
+                        `;
+                        directoriesList.appendChild(dirItem);
+                    });
+                    
+                    // Add event listeners to remove buttons
+                    document.querySelectorAll('.remove-directory-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const id = this.getAttribute('data-id');
+                            removeDirectory(id);
+                        });
+                    });
+                }
+            }
+            
+            // Add directory function
+            async function addDirectory() {
+                try {
+                    // Request directory access
+                    const handle = await window.showDirectoryPicker();
+                    
+                    // Check if directory is already added
+                    if (directories.some(dir => dir.handle.name === handle.name)) {
+                        showNotification('Directory already added!');
+                        return;
+                    }
+                    
+                    // Create directory object
+                    const directory = {
+                        id: Date.now().toString(),
+                        handle: handle,
+                        name: handle.name,
+                        sounds: []
+                    };
+                    
+                    // Add to state
+                    directories.push(directory);
+                    updateDirectoryDisplay();
+                    
+                    // Start loading
+                    updateStatus(`Loading ${directory.name}...`);
+                    updateProgress(10);
+                    
+                    // Scan for sounds
+                    updateStatus(`Scanning ${directory.name} for sounds...`);
+                    await scanDirectoryForSounds(directory, handle);
+                    
+                    // Render directories
+                    renderDirectories();
+                    
+                    // Update status
+                    const totalSounds = directories.reduce((sum, dir) => sum + dir.sounds.length, 0);
+                    updateStatus('Directory loaded successfully', totalSounds);
+                    updateProgress(100);
+                    
+                    // Show notification
+                    showNotification(`Added directory: ${directory.name} with ${directory.sounds.length} sounds`);
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        updateStatus('Error: ' + error.message);
+                        showNotification('Failed to load directory');
+                        console.error(error);
+                    }
+                }
+            }
+            
+            // Recursive function to scan directory for sounds
+            async function scanDirectoryForSounds(directory, handle) {
+                const soundFiles = [];
+                let soundCount = 0;
+                let totalFiles = 0;
+                
+                // Count total files first for progress
+                for await (const entry of handle.values()) {
+                    if (entry.kind === 'file') {
+                        totalFiles++;
+                    }
+                }
+                
+                let processedFiles = 0;
+                
+                // Process files
+                for await (const entry of handle.values()) {
+                    if (entry.kind === 'file') {
+                        processedFiles++;
+                        const progress = 10 + Math.floor((processedFiles / totalFiles) * 70);
+                        updateProgress(progress);
+                        
+                        const file = await entry.getFile();
+                        const extension = entry.name.split('.').pop().toLowerCase();
+                        
+                        if (soundExtensions.includes(extension)) {
+                            soundCount++;
+                            const url = URL.createObjectURL(file);
+                            
+                            // Determine sound type based on directory path
+                            let type = 'effects';
+                            if (directory.name.toLowerCase().includes('music')) type = 'music';
+                            if (directory.name.toLowerCase().includes('voices') || 
+                                directory.name.toLowerCase().includes('speech')) type = 'voices';
+                            
+                            directory.sounds.push({
+                                id: Date.now().toString() + soundCount,
+                                name: entry.name,
+                                path: `${directory.name}/${entry.name}`,
+                                url: url,
+                                size: file.size,
+                                lastModified: file.lastModified,
+                                type: type,
+                                duration: 0,
+                                file: file  // Store file object for downloading
+                            });
+                            
+                            updateStatus(`Loading sounds (${soundCount} found in ${directory.name})...`);
+                        }
+                    } else if (entry.kind === 'directory') {
+                        // Recursively scan subdirectories
+                        await scanDirectoryForSounds(directory, entry);
+                    }
+                }
+            }
+            
+            // Remove directory function
+            function removeDirectory(id) {
+                const directory = directories.find(dir => dir.id === id);
+                if (!directory) return;
+                
+                // Revoke object URLs to free memory
+                directory.sounds.forEach(sound => {
+                    URL.revokeObjectURL(sound.url);
+                });
+                
+                directories = directories.filter(dir => dir.id !== id);
+                updateDirectoryDisplay();
+                renderDirectories();
+                
+                const totalSounds = directories.reduce((sum, dir) => sum + dir.sounds.length, 0);
+                updateStatus('Directory removed', totalSounds);
+                showNotification('Directory removed');
+            }
+            
+            // Copy sound path function
+            function copySoundPath(path) {
+                navigator.clipboard.writeText(path).then(() => {
+                    showNotification('Path copied to clipboard!');
+                });
+            }
+            
+            // Show notification
+            function showNotification(message) {
+                notification.querySelector('span').textContent = message;
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+            
+            // Group sounds by type
+            function groupByType(sounds) {
+                const groups = {
+                    effects: { name: "Sound Effects", sounds: [] },
+                    music: { name: "Music", sounds: [] },
+                    voices: { name: "Voice Acting", sounds: [] }
+                };
+                
+                sounds.forEach(sound => {
+                    if (groups[sound.type]) {
+                        groups[sound.type].sounds.push(sound);
+                    } else {
+                        groups.effects.sounds.push(sound);
+                    }
+                });
+                
+                return Object.values(groups).filter(group => group.sounds.length > 0);
+            }
+            
+            // Group sounds by size
+            function groupBySize(sounds) {
+                const groups = {
+                    small: { name: "Small (< 100KB)", sounds: [] },
+                    medium: { name: "Medium (100KB - 1MB)", sounds: [] },
+                    large: { name: "Large (> 1MB)", sounds: [] }
+                };
+                
+                sounds.forEach(sound => {
+                    if (sound.size < 100 * 1024) {
+                        groups.small.sounds.push(sound);
+                    } else if (sound.size < 1024 * 1024) {
+                        groups.medium.sounds.push(sound);
+                    } else {
+                        groups.large.sounds.push(sound);
+                    }
+                });
+                
+                return Object.values(groups).filter(group => group.sounds.length > 0);
+            }
+            
+            // Group sounds by date
+            function groupByDate(sounds) {
+                const groups = {};
+                
+                sounds.forEach(sound => {
+                    const date = new Date(sound.lastModified);
+                    const dateStr = date.toLocaleDateString();
+                    
+                    if (!groups[dateStr]) {
+                        groups[dateStr] = {
+                            name: dateStr,
+                            sounds: []
+                        };
+                    }
+                    groups[dateStr].sounds.push(sound);
+                });
+                
+                return Object.values(groups);
+            }
+            
+            // NEW: Function to open sound modal
+            function openSoundModal(sound) {
+                currentSound = sound;
+                
+                // Set modal content
+                modalSoundPath.textContent = sound.path;
+                modalSoundName.textContent = editableNames[sound.id] || sound.name;
+                modalSoundType.textContent = sound.type.charAt(0).toUpperCase() + sound.type.slice(1);
+                modalSoundSize.textContent = formatFileSize(sound.size);
+                modalSoundFormat.textContent = sound.url.split('.').pop().toUpperCase();
+                
+                // Set audio player
+                modalAudio.src = sound.url;
+                modalAudio.load();
+                
+                // Open modal
+                soundModal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            // NEW: Close modal function
+            function closeSoundModal() {
+                soundModal.classList.remove('show');
+                document.body.style.overflow = 'auto';
+                
+                // Pause audio when closing modal
+                if (modalAudio) {
+                    modalAudio.pause();
+                }
+            }
+            
+            // NEW: Event listeners for modal
+            closeModalBtn.addEventListener('click', closeSoundModal);
+            
+            soundModal.addEventListener('click', function(e) {
+                if (e.target === soundModal) {
+                    closeSoundModal();
+                }
+            });
+            
+            // NEW: Volume control
+            volumeControl.addEventListener('input', function() {
+                modalAudio.volume = parseFloat(this.value);
+            });
+            
+            // NEW: Playback speed control
+            playbackSpeed.addEventListener('change', function() {
+                modalAudio.playbackRate = parseFloat(this.value);
+            });
+            
+            // NEW: Copy path from modal
+            modalCopyPathBtn.addEventListener('click', function() {
+                copySoundPath(currentSound.path);
+            });
+            
+            // NEW: Download sound
+            modalDownloadBtn.addEventListener('click', async function() {
+            // Get processing settings
+            const settings = {
+                pitch: parseFloat(document.getElementById('pitch-shift').value),
+                bass: parseInt(document.getElementById('bass-boost').value),
+                treble: parseInt(document.getElementById('treble-boost').value),
+                reverb: parseInt(document.getElementById('reverb').value),
+                normalize: document.getElementById('normalize').checked,
+                reverse: document.getElementById('reverse').checked
+            };
+            
+            // Show processing indicator
+            const originalText = this.textContent;
+            this.textContent = 'Processing...';
+            this.disabled = true;
+            
+            try {
+                // Get the audio file
+                const response = await fetch(currentSound.url);
+                const arrayBuffer = await response.arrayBuffer();
+                
+                // Decode audio data
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+                
+                // Process the audio
+                const processedBuffer = await processSound(audioBuffer, settings);
+                
+                // Convert to WAV
+                const wavBlob = bufferToWav(processedBuffer);
+                
+                // Create download link
+                const a = document.createElement('a');
+                const fileName = currentSound.name.replace(/\.[^/.]+$/, "") + '_processed.wav';
+                a.href = URL.createObjectURL(wavBlob);
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                // Clean up
+                setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+                showNotification('Processed sound downloaded');
+            } catch (error) {
+                console.error('Sound processing failed:', error);
+                showNotification('Error processing sound');
+            } finally {
+                // Restore button
+                this.textContent = originalText;
+                this.disabled = false;
+            }
+        });
+            
+        // NEW: Audio processing functions
+        async function processSound(audioBuffer, settings) {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Create offline context for processing
+        const sampleRate = audioBuffer.sampleRate;
+        const frameCount = Math.floor(audioBuffer.duration * sampleRate);
+        const offlineCtx = new OfflineAudioContext(
+            audioBuffer.numberOfChannels,
+            frameCount,
+            sampleRate
+        );
+        
+        // Create source
+        const source = offlineCtx.createBufferSource();
+        
+        // Apply reverse if needed
+        if (settings.reverse) {
+            // Create reversed buffer using offline context
+            const reversed = offlineCtx.createBuffer(
+                audioBuffer.numberOfChannels,
+                audioBuffer.length,
+                audioBuffer.sampleRate
+            );
+            
+            for (let i = 0; i < audioBuffer.numberOfChannels; i++) {
+                const original = audioBuffer.getChannelData(i);
+                const reversedData = reversed.getChannelData(i);
+                
+                for (let j = 0; j < audioBuffer.length; j++) {
+                    reversedData[j] = original[audioBuffer.length - 1 - j];
+                }
+            }
+            source.buffer = reversed;
+        } else {
+            source.buffer = audioBuffer;
+        }
+        
+        // Create processing nodes
+        const compressor = offlineCtx.createDynamicsCompressor();
+        const filterLow = offlineCtx.createBiquadFilter();
+        const filterHigh = offlineCtx.createBiquadFilter();
+        const convolver = offlineCtx.createConvolver();
+        
+        // Set up processing chain
+        source.connect(filterLow);
+        filterLow.connect(filterHigh);
+        filterHigh.connect(compressor);
+        
+        // Apply effects
+        // Pitch shifting
+        source.playbackRate.value = settings.pitch;
+        
+        // Bass boost
+        filterLow.type = "lowshelf";
+        filterLow.frequency.value = 320.0;
+        filterLow.gain.value = settings.bass / 20;
+        
+        // Treble boost
+        filterHigh.type = "highshelf";
+        filterHigh.frequency.value = 3200.0;
+        filterHigh.gain.value = settings.treble / 20;
+        
+        // Normalization
+        if (settings.normalize) {
+            compressor.threshold.value = -24;
+            compressor.knee.value = 30;
+            compressor.ratio.value = 12;
+            compressor.attack.value = 0.01;
+            compressor.release.value = 0.25;
+        } else {
+            compressor.threshold.value = 0;
+            compressor.knee.value = 0;
+            compressor.ratio.value = 1;
+        }
+        
+        // Reverb
+        if (settings.reverb > 0) {
+            compressor.connect(convolver);
+            convolver.connect(offlineCtx.destination);
+            
+            // Create impulse response for reverb using offline context
+            const impulse = offlineCtx.createBuffer(2, sampleRate, sampleRate);
+            const left = impulse.getChannelData(0);
+            const right = impulse.getChannelData(1);
+            
+            // Create decaying noise
+            for (let i = 0; i < sampleRate; i++) {
+                left[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / sampleRate, 1.5);
+                right[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / sampleRate, 1.5);
+            }
+            
+            // Adjust reverb level
+            const gainNode = offlineCtx.createGain();
+            gainNode.gain.value = settings.reverb / 200;
+            convolver.connect(gainNode);
+            gainNode.connect(offlineCtx.destination);
+            
+            convolver.buffer = impulse;
+        } else {
+            compressor.connect(offlineCtx.destination);
+        }
+        
+        // Start processing
+        source.start();
+        const processedBuffer = await offlineCtx.startRendering();
+        
+        return processedBuffer;
+    }
+        
+        function reverseBuffer(buffer) {
+            const reversed = buffer.context.createBuffer(
+                buffer.numberOfChannels,
+                buffer.length,
+                buffer.sampleRate
+            );
+            
+            for (let i = 0; i < buffer.numberOfChannels; i++) {
+                const original = buffer.getChannelData(i);
+                const reversedData = reversed.getChannelData(i);
+                
+                for (let j = 0; j < buffer.length; j++) {
+                    reversedData[j] = original[buffer.length - 1 - j];
+                }
+            }
+            
+            return reversed;
+        }
+        
+        function bufferToWav(buffer) {
+            const numChannels = buffer.numberOfChannels;
+            const sampleRate = buffer.sampleRate;
+            const format = 3; // float32
+            const bitDepth = 32;
+            
+            let length = buffer.length * numChannels * (bitDepth / 8);
+            const bufferLength = 44 + length;
+            const arrayBuffer = new ArrayBuffer(bufferLength);
+            const view = new DataView(arrayBuffer);
+            
+            // Write WAV header
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + length, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, format, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * numChannels * (bitDepth / 8), true);
+            view.setUint16(32, numChannels * (bitDepth / 8), true);
+            view.setUint16(34, bitDepth, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, length, true);
+            
+            // Write audio data
+            let offset = 44;
+            for (let i = 0; i < buffer.length; i++) {
+                for (let channel = 0; channel < numChannels; channel++) {
+                    const sample = buffer.getChannelData(channel)[i];
+                    view.setFloat32(offset, sample, true);
+                    offset += 4;
+                }
+            }
+            
+            return new Blob([view], { type: 'audio/wav' });
+        }
+        
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+            // NEW: Save changes
+            saveChangesBtn.addEventListener('click', function() {
+                // In a real app, you would save settings to storage
+                showNotification('Sound settings saved');
+            });
+            // Render directories
+            function renderDirectories() {
+                if (directories.length === 0) {
+                    directoriesContainer.innerHTML = `
+                        <div class="empty-state">
+                            <h3>No directories added yet</h3>
+                            <p>Add directories containing your Wesnoth game sounds using the button above. Sounds will be displayed here organized by directory.</p>
+                            <p>You can then copy their paths for use in game configuration files.</p>
+                            <div class="tooltip">
+                                <button class="btn btn-add" id="load-sample">Load Sample Wesnoth Sounds</button>
+                                <span class="tooltiptext">Load sample Wesnoth sounds for demonstration</span>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('load-sample').addEventListener('click', loadSampleData);
+                    updateStatus('Ready to load sounds', 0);
+                    updateProgress(0);
+                    return;
+                }
+                
+                let html = '';
+                let totalSounds = 0;
+                
+                // Get all sounds from all directories
+                const allSounds = [];
+                directories.forEach(dir => {
+                    allSounds.push(...dir.sounds);
+                });
+                totalSounds = allSounds.length;
+                
+                // Apply filter
+                let filteredSounds = allSounds;
+                if (currentFilter !== 'all') {
+                    filteredSounds = allSounds.filter(sound => sound.type === currentFilter);
+                }
+                
+                // Apply organization method
+                let groups = [];
+                if (currentOrganization === 'folder') {
+                    // Group by folder
+                    groups = directories.map(dir => {
+                        return {
+                            name: dir.name,
+                            sounds: dir.sounds.filter(sound => filteredSounds.includes(sound)),
+                            id: dir.id
+                        };
+                    }).filter(group => group.sounds.length > 0);
+                } else if (currentOrganization === 'type') {
+                    // Group by type
+                    groups = groupByType(filteredSounds);
+                } else if (currentOrganization === 'size') {
+                    // Group by size
+                    groups = groupBySize(filteredSounds);
+                } else if (currentOrganization === 'date') {
+                    // Group by date
+                    groups = groupByDate(filteredSounds);
+                }
+                
+                // Render groups
+                groups.forEach(group => {
+                    let soundsHtml = '';
+                    
+                    if (group.sounds.length === 0) {
+                        soundsHtml = `
+                            <div class="no-sounds">
+                                <p>No sounds found in this group</p>
+                            </div>
+                        `;
+                    } else {
+                        group.sounds.forEach(sound => {
+                            const displayName = editableNames[sound.id] || sound.name;
+                soundsHtml += `
+                    <div class="sound-card" data-sound-id="${sound.id}">
+                                    <div class="sound-preview">
+                                        <div class="audio-player">
+                                            <audio controls preload="metadata">
+                                                <source src="${sound.url}" type="audio/${sound.url.split('.').pop()}">
+                                                Your browser does not support the audio element.
+                                            </audio>
+                                        </div>
+                                    </div>
+                                    <div class="sound-info">
+                                        <div class="sound-name-container">
+                                            <div class="sound-name" title="${displayName}">${displayName}</div>
+                                            <button class="edit-name-btn" data-id="${sound.id}">✏️</button>
+                                        </div>
+                                        <input type="text" class="edit-name-input" data-id="${sound.id}" value="${displayName}" style="display: none;">
+                                        <div class="sound-path" title="${sound.path}">${sound.path}</div>
+                                        <div class="sound-info-item">
+                                            <span class="sound-info-label">Type:</span>
+                                            <span class="sound-info-value">${sound.type}</span>
+                                        </div>
+                                        <div class="sound-info-item">
+                                            <span class="sound-info-label">Size:</span>
+                                            <span class="sound-info-value">${formatFileSize(sound.size)}</span>
+                                        </div>
+                                        <div class="sound-controls">
+                                            <div class="tooltip">
+                                                <button class="btn btn-copy" onclick="copySoundPath('${sound.path.replace(/'/g, "\\'")}')">Copy Path</button>
+                                                <span class="tooltiptext">Copy relative path to clipboard</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+                    
+                    html += `
+                        <div class="directory-container" data-id="${group.id || ''}">
+                            <div class="directory-header">
+                                <div class="directory-title">
+                                    ${group.name}
+                                    <span class="sound-count">${group.sounds.length} sounds</span>
+                                </div>
+                                ${group.id ? `
+                                    <div class="tooltip">
+                                        <button class="btn btn-remove" onclick="removeDirectory('${group.id}')">Remove</button>
+                                        <span class="tooltiptext">Remove this directory and its sounds</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="sounds-grid">
+                                ${soundsHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                directoriesContainer.innerHTML = html;
+                
+                // Add event listeners for name editing
+                document.querySelectorAll('.edit-name-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        const nameDisplay = this.previousElementSibling;
+                        const input = nameDisplay.nextElementSibling;
+                        
+                        nameDisplay.style.display = 'none';
+                        input.style.display = 'block';
+                        input.focus();
+                    });
+                });
+                
+                document.querySelectorAll('.edit-name-input').forEach(input => {
+                    input.addEventListener('blur', function() {
+                        const id = this.getAttribute('data-id');
+                        const nameDisplay = this.previousElementSibling.previousElementSibling;
+                        
+                        editableNames[id] = this.value;
+                        nameDisplay.textContent = this.value;
+                        
+                        this.style.display = 'none';
+                        nameDisplay.style.display = 'block';
+                    });
+                    
+                    input.addEventListener('keyup', function(e) {
+                        if (e.key === 'Enter') {
+                            this.blur();
+                        }
+                    });
+                });
+                
+                // NEW: Add event listeners to sound cards
+                document.querySelectorAll('.sound-card').forEach(card => {
+                    card.addEventListener('click', function(e) {
+                        // Don't open modal if editing name
+                        if (e.target.closest('.edit-name-btn') || e.target.closest('.edit-name-input')) {
+                            return;
+                        }
+                        
+                        const soundId = this.getAttribute('data-sound-id');
+                        const sound = findSoundById(soundId);
+                        
+                        if (sound) {
+                            openSoundModal(sound);
+                        }
+                    });
+                });
+                updateStatus('Directories loaded successfully', totalSounds);
+            }
+            
+            // NEW: Helper function to find sound by ID
+            function findSoundById(id) {
+                for (const dir of directories) {
+                    const sound = dir.sounds.find(s => s.id === id);
+                    if (sound) return sound;
+                }
+                return null;
+            }
+            // Format file size for display
+            function formatFileSize(bytes) {
+                if (bytes < 1024) return bytes + ' bytes';
+                else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+                else return (bytes / 1048576).toFixed(1) + ' MB';
+            }
+            
+            // Sample data for demonstration
+            function loadSampleData() {
+                directories = [];
+                updateProgress(30);
+                
+                const wesnothDirs = [
+                    {
+                        id: 'dir1',
+                        name: 'sounds',
+                        sounds: [
+                            {
+                                id: 'snd1', 
+                                name: 'sword.ogg', 
+                                path: 'sounds/weapons/sword.ogg', 
+                                url: 'https://www.soundjay.com/weapons/sounds/sword-1.mp3', 
+                                size: 85000, 
+                                lastModified: Date.now(),
+                                type: 'effects'
+                            },
+                            {
+                                id: 'snd2', 
+                                name: 'arrow.ogg', 
+                                path: 'sounds/weapons/arrow.ogg', 
+                                url: 'https://www.soundjay.com/weapons/sounds/arrow-1.mp3', 
+                                size: 92000, 
+                                lastModified: Date.now() - 86400000,
+                                type: 'effects'
+                            },
+                            {
+                                id: 'snd3', 
+                                name: 'fireball.ogg', 
+                                path: 'sounds/spells/fireball.ogg', 
+                                url: 'https://www.soundjay.com/explosion/sounds/explosion-01.mp3', 
+                                size: 78000, 
+                                lastModified: Date.now() - 172800000,
+                                type: 'effects'
+                            }
+                        ]
+                    },
+                    {
+                        id: 'dir2',
+                        name: 'music',
+                        sounds: [
+                            {
+                                id: 'snd4', 
+                                name: 'main_theme.ogg', 
+                                path: 'music/main_theme.ogg', 
+                                url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', 
+                                size: 1200000, 
+                                lastModified: Date.now() - 259200000,
+                                type: 'music'
+                            },
+                            {
+                                id: 'snd5', 
+                                name: 'battle_theme.ogg', 
+                                path: 'music/battle_theme.ogg', 
+                                url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', 
+                                size: 1500000, 
+                                lastModified: Date.now() - 345600000,
+                                type: 'music'
+                            }
+                        ]
+                    },
+                    {
+                        id: 'dir3',
+                        name: 'voices',
+                        sounds: [
+                            {
+                                id: 'snd6', 
+                                name: 'elvish_archer.ogg', 
+                                path: 'voices/elves/archer.ogg', 
+                                url: 'https://www.soundjay.com/voices/female-voice-battle-cry-1.mp3', 
+                                size: 45000, 
+                                lastModified: Date.now() - 432000000,
+                                type: 'voices'
+                            },
+                            {
+                                id: 'snd7', 
+                                name: 'dwarf_warrior.ogg', 
+                                path: 'voices/dwarves/warrior.ogg', 
+                                url: 'https://www.soundjay.com/voices/male-voice-battle-cry-1.mp3', 
+                                size: 50000, 
+                                lastModified: Date.now() - 518400000,
+                                type: 'voices'
+                            }
+                        ]
+                    }
+                ];
+                
+                setTimeout(() => {
+                    directories = wesnothDirs;
+                    updateDirectoryDisplay();
+                    renderDirectories();
+                    updateProgress(100);
+                    showNotification('Sample Wesnoth sounds loaded!');
+                    updateStatus('Sample data loaded successfully', 7);
+                }, 800);
+            }
+            
+            // Event listeners
+            chooseDirectoryBtn.addEventListener('click', addDirectory);
+            
+            clearAllBtn.addEventListener('click', () => {
+                // Revoke all object URLs to free memory
+                directories.forEach(directory => {
+                    directory.sounds.forEach(sound => {
+                        URL.revokeObjectURL(sound.url);
+                    });
+                });
+                
+                directories = [];
+                editableNames = {};
+                updateDirectoryDisplay();
+                renderDirectories();
+                showNotification('All directories cleared!');
+            });
+            
+            sampleDataBtn.addEventListener('click', loadSampleData);
+            document.getElementById('load-sample').addEventListener('click', loadSampleData);
+            
+            // Organization method change
+            organizationMethod.addEventListener('change', function() {
+                currentOrganization = this.value;
+                renderDirectories();
+            });
+            
+            // Sound filter change
+            soundFilter.addEventListener('change', function() {
+                currentFilter = this.value;
+                renderDirectories();
+            });
+            
+        document.getElementById('pitch-shift').addEventListener('input', function() {
+            document.getElementById('pitch-value').textContent = this.value + 'x';
+        });
+        
+        document.getElementById('bass-boost').addEventListener('input', function() {
+            document.getElementById('bass-value').textContent = this.value + '%';
+        });
+        
+        document.getElementById('treble-boost').addEventListener('input', function() {
+            document.getElementById('treble-value').textContent = this.value + '%';
+        });
+        
+        document.getElementById('reverb').addEventListener('input', function() {
+            document.getElementById('reverb-value').textContent = this.value + '%';
+        });
+            // Expose functions to global scope for inline handlers
+            window.removeDirectory = removeDirectory;
+            window.copySoundPath = copySoundPath;
+        });
+    </script>
+</body>
+</html>
