@@ -197,29 +197,39 @@ body {
 
 /* LIGHTBOX STYLES */
 .imag-tools-lightbox {
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background: rgba(0, 0, 0, 0.95);
-	display: flex;
-	z-index: 1000;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90vw;
+    height: 90vh;
+    max-width: 1400px;
+    max-height: 90vh;
+    background: rgba(0, 0, 0, 0.95);
+    display: none;
+    flex-direction: column;
+    z-index: 1000;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+}
+
+#imag-tools-lightbox {
+    display: flex;
+    flex-direction: column;
+    height: 90vh;
 }
 
 .imag-tools-lightbox-header {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	background: rgba(0, 0, 0, 0.85);
-	padding: 12px 20px;
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	z-index: 20;
-	height: 50px;
-	border-bottom: 1px solid var(--accent-color);
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 20px;
+    z-index: 20;
+    border-bottom: 1px solid var(--accent-color);
+    flex-shrink: 0; /* Prevent header from growing */
+    max-height: 30vh; /* Limit height and allow scrolling */
+    overflow-y: auto; /* Enable scrolling for long content */
 }
 
 .imag-tools-lightbox-path {
@@ -234,32 +244,29 @@ body {
     flex-direction: column;
 }
 
+.imag-tools-lightbox-main {
+    display: flex;
+    flex: 1; /* Take up remaining space */
+    min-height: 0; /* Allow it to shrink */
+}
 .imag-tools-lightbox-sidebar {
-	position: absolute;
-	right: 0;
-	top: 50px;
-	height: calc(100% - 50px);
-	width: 280px;
-	background: rgba(20, 30, 15, 0.9);
-	padding: 20px;
-	overflow-y: auto;
-	z-index: 15;
-	border-left: 1px solid var(--accent-color);
-	box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
+    width: 280px;
+    background: rgba(20, 30, 15, 0.9);
+    padding: 20px;
+    overflow-y: auto;
+    border-left: 1px solid var(--accent-color);
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
+    flex-shrink: 0; /* Prevent sidebar from shrinking */
 }
 
 .imag-tools-lightbox-content {
-	position: absolute;
-	top: 50px;
-	left: 0;
-	right: 280px;
-	bottom: 0;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	overflow: auto;
-	padding: 20px;
-	z-index: 10;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: auto;
+    padding: 20px;
+    position: relative;
 }
 
 .imag-tools-lightbox-image {
@@ -316,13 +323,8 @@ body {
 	transform: translateY(-50%) scale(1.1);
 }
 
-.imag-tools-lightbox-prev {
-	left: 20px;
-}
-
-.imag-tools-lightbox-next {
-	right: 300px;
-}
+.imag-tools-lightbox-prev { left: 20px; }
+.imag-tools-lightbox-next { right: 300px; }
 
 .imag-tools-lightbox-options-title {
 	color: var(--accent-color);
@@ -451,15 +453,24 @@ body {
     border-bottom: 1px solid var(--secondary-color);
 }
 
-.imag-tools-grid-item-path {
-	padding: 10px;
-	font-size: 0.9rem;
-	color: var(--accent-color);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	text-align: center;
+.imag-tools-grid-item-path-input {
+	width: 100%;
+	padding: 8px;
 	background: rgba(0, 0, 0, 0.3);
+	color: var(--accent-color);
+	border: none;
+	font-family: inherit;
+	font-size: 0.9rem;
+	text-align: center;
+	border-top: 1px solid var(--secondary-color);
+}
+.imag-tools-grid-item-path {
+	padding: 0;
+}
+.imag-tools-grid-item.active {
+	border: 2px solid var(--accent-color);
+	transform: scale(1.02);
+	box-shadow: 0 0 15px rgba(218, 192, 87, 0.5);
 }
 
 /* Hide nav buttons in grid view */
@@ -467,45 +478,28 @@ body {
 	display: none;
 }
 
+/* Media query for mobile */
 @media (max-width: 768px) {
-	.imag-tools-images-container {
-		grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-	}
-	
-	.imag-tools-display-options {
-		flex-direction: column;
-		gap: 15px;
-	}
-	
-	.imag-tools-lightbox-sidebar {
-		width: 100%;
-		height: 40%;
-		top: auto;
-		bottom: 0;
-		left: 0;
-		border-left: none;
-		border-top: 1px solid var(--accent-color);
-	}
-	
-	.imag-tools-lightbox-content {
-		top: 50px;
-		right: 0;
-		bottom: 40%;
-	}
-	
-	.imag-tools-lightbox-next {
-		right: 20px;
-	}
-	
-	.imag-tools-selected-items-container {
-		max-height: 150px;
-	}
-	
-	.imag-tools-grid {
-		grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-	}
+    .imag-tools-lightbox-main {
+        flex-direction: column;
+    }
+    
+    .imag-tools-lightbox-sidebar {
+        width: 100%;
+        height: 40%;
+        border-left: none;
+        border-top: 1px solid var(--accent-color);
+    }
 }
 
+/* Adjust navigation arrows */
+.imag-tools-lightbox-prev {
+    left: 20px;
+}
+
+.imag-tools-lightbox-next {
+    right: 20px;
+}
 .imag-tools-function-buttons {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -542,10 +536,10 @@ body {
     margin-bottom: 15px;
 }
 .imag-tools-function-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 15px;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 15px;
 }
 
 .imag-tools-func-dropdown {
@@ -570,7 +564,7 @@ body {
 }
 
 .imag-tools-func-dropdown:hover .imag-tools-func-dropdown-content {
-  display: block;
+	display: block;
 }
 
 .imag-tools-func-description {
@@ -671,4 +665,116 @@ body {
 
 .imag-tools-func-details {
     padding: 10px;
+}
+.imag-tools-lightbox-path-container {
+    width: 100%;
+    padding: 5px;
+    background: rgba(0,0,0,0.3);
+    margin-top: 5px;
+}
+
+.imag-tools-path-input-container {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.imag-tools-path-list-item .imag-tools-path-input {
+    flex-grow: 1;
+    padding: 4px;
+    background: rgba(0,0,0,0.3);
+    color: var(--light-color);
+    border: 1px solid var(--secondary-color);
+    border-radius: 4px;
+    min-width: 0;
+    font-family: monospace;
+}
+
+.imag-tools-path-basename {
+    color: var(--accent-color);
+    padding: 5px;
+    font-family: monospace;
+}
+
+.imag-tools-path-input {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border: 1px solid var(--accent-color) !important;
+    color: var(--accent-color) !important;
+    font-weight: bold;
+}
+
+.imag-tools-path-basename {
+    color: var(--accent-color);
+    padding: 5px;
+    font-family: monospace;
+}
+
+.imag-tools-path-extension {
+    color: var(--accent-color);
+    padding: 5px;
+    font-family: monospace;
+}
+
+.imag-tools-grid-item-path-input,
+.imag-tools-lightbox-image-path-input {
+    flex-grow: 1;
+    padding: 8px;
+    background: rgba(0,0,0,0.3);
+    color: var(--light-color);
+    border: 1px solid var(--secondary-color);
+    border-radius: 4px;
+}
+/* Path list container */
+.imag-tools-lightbox-image-path-container {
+    max-height: 200px;
+    overflow-y: auto;
+    width: 100%;
+    margin-top: 5px;
+    padding-right: 10px;
+}
+
+.imag-tools-path-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    max-height: 25vh; /* Limit height for scroll */
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* Individual path item */
+.imag-tools-path-list-item {
+    display: flex;
+    padding: 8px;
+    background: rgba(0,0,0,0.2);
+    margin-bottom: 5px;
+    border-radius: 4px;
+    border: 1px solid var(--secondary-color);
+}
+
+/* Active path item */
+.imag-tools-path-list-item.active {
+    background: rgba(218, 192, 87, 0.25);
+    border-left: 3px solid var(--accent-color);
+}
+
+/* Path text */
+.imag-tools-path-list-item .imag-tools-path-text {
+	flex-grow: 1;
+	font-family: monospace;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Path input */
+.imag-tools-path-list-item input {
+	flex-grow: 1;
+	padding: 4px;
+	background: rgba(0,0,0,0.3);
+	color: var(--light-color);
+	border: 1px solid var(--secondary-color);
+	border-radius: 4px;
+	min-width: 0;
+	font-family: monospace;
 }

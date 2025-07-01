@@ -1,7 +1,23 @@
+window.wesnothImageTools = {
+	lightboxViewMode: 'single'
+};
+function getPathBaseName(path) {
+    const lastDot = path.lastIndexOf('.');
+    if (lastDot === -1) return path;
+    return path.substring(0, lastDot);
+}
+
+function getPathExtension(path) {
+    const lastDot = path.lastIndexOf('.');
+    if (lastDot === -1) return '';
+    return path.substring(lastDot + 1);
+}
 document.addEventListener('DOMContentLoaded', function() {
 	// Toggle help section
 	const toggleHelpBtn = document.getElementById('imag-tools-toggle-help');
 	const helpContent = document.getElementById('imag-tools-help-content');
+    // Find the container where all path inputs are shown
+    const pathContainer = document.getElementById('imag-tools-lightbox-image-path');
 	
 	toggleHelpBtn.addEventListener('click', function() {
 		helpContent.classList.toggle('collapsed');
@@ -21,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	const zoomSelect = document.getElementById('imag-tools-lightbox-zoom');
 	const rotationSelect = document.getElementById('imag-tools-lightbox-rotation');
 	const selectedItemsContainer = document.getElementById('imag-tools-selected-items');
-const lightboxImagePath = document.getElementById('imag-tools-lightbox-image-path');
+	const lightboxImagePath = document.getElementById('imag-tools-lightbox-image-path');
 	
 	// NEW: View mode elements
 	const viewModeSelect = document.getElementById('imag-tools-lightbox-view-mode');
@@ -194,6 +210,9 @@ const lightboxImagePath = document.getElementById('imag-tools-lightbox-image-pat
 		if (selectedImages.length === 0) return;
 		currentLightboxIndex = (currentLightboxIndex + direction + selectedImages.length) % selectedImages.length;
 		showLightboxImage();
+		if (lightboxViewMode === 'all') {
+			renderPathList();
+		}
 	}
 	
 	// Show current image in lightbox
@@ -210,13 +229,27 @@ const lightboxImagePath = document.getElementById('imag-tools-lightbox-image-pat
 			}
 		}
 		
-    if (image) {
-        lightboxImg.src = image.url;
-        lightboxImagePath.textContent = image.path; // Update only the path text
-        applyImageTransformations();
-    }
-		
-		updateSelectedItemsList();
+		if (image) {
+			lightboxImg.src = image.url;
+			
+			// Get base name and extension
+			const extension = getPathExtension(image.path);
+			const baseName = getPathBaseName(image.path);
+			
+			// Update path display
+			lightboxImagePath.innerHTML = `
+			<div class="imag-tools-path-input-container">
+			<span class="imag-tools-path-basename">${baseName}</span>
+			<span class="imag-tools-path-extension">.${extension}</span>
+			<input type="text" class="imag-tools-lightbox-image-path-input" id="imag-tools-area-input" value="">
+			</div>
+			`;
+			
+			applyImageTransformations();
+			if (lightboxViewMode === 'all') {
+				renderPathList();
+			}
+		}
 	}
 	
 	// Update selected items list in sidebar
@@ -255,12 +288,6 @@ const lightboxImagePath = document.getElementById('imag-tools-lightbox-image-pat
 				const id = this.dataset.id;
 				currentLightboxIndex = selectedImages.indexOf(id);
 				showLightboxImage();
-				// Switch to single view if in grid mode
-				if (lightboxViewMode === 'all') {
-					lightboxViewMode = 'single';
-					viewModeSelect.value = 'single';
-					updateLightboxView();
-				}
 			});
 			
 			selectedItemsContainer.appendChild(item);
@@ -268,16 +295,16 @@ const lightboxImagePath = document.getElementById('imag-tools-lightbox-image-pat
 	}
 	
 	// Apply zoom and rotation transformations
-function applyImageTransformations() {
-    if (lightboxViewMode === 'single' && lightboxImg) {
-        applyTransformationsToElement(lightboxImg);
-    } else if (lightboxViewMode === 'all') {
-        const gridImages = gridContainer.querySelectorAll('.imag-tools-grid-item img');
-        gridImages.forEach(img => {
-            applyTransformationsToElement(img);
-        });
-    }
-}
+	function applyImageTransformations() {
+		if (lightboxViewMode === 'single' && lightboxImg) {
+			applyTransformationsToElement(lightboxImg);
+			} else if (lightboxViewMode === 'all') {
+			const gridImages = gridContainer.querySelectorAll('.imag-tools-grid-item img');
+			gridImages.forEach(img => {
+				applyTransformationsToElement(img);
+			});
+		}
+	}
 	
 	// NEW: Toggle view mode
 	viewModeSelect.addEventListener('change', function() {
@@ -293,28 +320,31 @@ function applyImageTransformations() {
 			gridContainer.style.display = 'none';
 			lightboxPrev.style.display = 'flex';
 			lightboxNext.style.display = 'flex';
-        modeIndicator.textContent = 'Single View: ';
-        showLightboxImage();
+			modeIndicator.textContent = 'Single View: ';
+			showLightboxImage();
+			window.wesnothImageTools.lightboxViewMode = 'single';
 			} else {
 			// Show all images grid
 			lightboxImg.style.display = 'none';
 			gridContainer.style.display = 'block';
 			lightboxPrev.style.display = 'none';
 			lightboxNext.style.display = 'none';
-        modeIndicator.textContent = 'All Selected Images';
-        lightboxImagePath.textContent = ''; // Clear image path
-        renderAllSelectedImages();
+			modeIndicator.textContent = 'All Selected Images';
+			lightboxImagePath.textContent = ''; // Clear image path
+			renderAllSelectedImages();
+			window.wesnothImageTools.lightboxViewMode = 'all';
+			renderPathList();
 		}
 	}
 	
 	// NEW: Render grid view of all selected images
 	function renderAllSelectedImages() {
-    gridContainer.innerHTML = '';
-
-    if (selectedImages.length === 0) {
-        gridContainer.innerHTML = '<div class="imag-tools-empty-state">No images selected</div>';
-        return;
-    }
+		gridContainer.innerHTML = '';
+		
+		if (selectedImages.length === 0) {
+			gridContainer.innerHTML = '<div class="imag-tools-empty-state">No images selected</div>';
+			return;
+		}
 		
 		// Create a map of images by ID for faster lookup
 		const imagesMap = new Map();
@@ -327,82 +357,152 @@ function applyImageTransformations() {
 		// Create grid container
 		const grid = document.createElement('div');
 		grid.className = 'imag-tools-grid';
-
-    // Add all selected images to the grid
-    selectedImages.forEach(imageId => {
-        const image = imagesMap.get(imageId);
-        if (!image) return;
-
-        const item = document.createElement('div');
-        item.className = 'imag-tools-grid-item';
-        item.dataset.id = imageId;
-
-        item.innerHTML = `
-            <img src="${image.url}" alt="${image.name}">
-            <div class="imag-tools-grid-item-path">${image.path}</div>
-        `;
-
-        // FIX: Get the image element AFTER it's created
-        const imgElement = item.querySelector('img');
-        applyTransformationsToElement(imgElement); // Apply transformations here
-
-        // Apply current transformations to each image
-        applyTransformationsToElement(imgElement);
+		
+		// Add all selected images to the grid
+		selectedImages.forEach(imageId => {
+			const image = imagesMap.get(imageId);
+			if (!image) return;
+			
+			const extension = getPathExtension(image.path);
+			const baseName = getPathBaseName(image.path);
+			
+			const item = document.createElement('div');
 			item.className = 'imag-tools-grid-item';
 			item.dataset.id = imageId;
 			
+			
 			item.innerHTML = `
 			<img src="${image.url}" alt="${image.name}">
-			<div class="imag-tools-grid-item-path">${image.path}</div>
 			`;
 			
-			// Add click handler to switch to single view
-			item.addEventListener('click', function() {
-				// Switch to single view
-				lightboxViewMode = 'single';
-				viewModeSelect.value = 'single';
-				updateLightboxView();
-				
-				// Find the index of this image
-				currentLightboxIndex = selectedImages.indexOf(imageId);
-				showLightboxImage();
+			// Apply transformations to the image
+			const imgElement = item.querySelector('img');
+			applyTransformationsToElement(imgElement);
+			
+			// Only keep this click handler for selection
+			item.addEventListener('click', function(e) {
+				// Only activate if not clicking on input directly
+				if (!e.target.classList.contains('imag-tools-grid-item-path-input')) {
+					grid.querySelectorAll('.imag-tools-grid-item').forEach(el => {
+						el.classList.remove('active');
+					});
+					this.classList.add('active');
+				}
 			});
 			
 			grid.appendChild(item);
 		});
 		
 		gridContainer.appendChild(grid);
-}
+	}
 	
-function applyTransformationsToElement(el) {
-    const zoomValue = zoomSelect.value;
-    const rotationValue = rotationSelect.value;
-    
-    el.style.objectFit = '';
-    el.style.width = '';
-    el.style.height = '';
-    
-    if (zoomValue === 'contain') {
-        el.style.objectFit = 'contain';
-    } else {
-        el.style.width = `${zoomValue}%`;
-        el.style.height = 'auto';
-    }
-    
-    el.style.transform = `rotate(${rotationValue}deg)`;
-}
+	function renderPathList() {
+		const container = lightboxImagePath;
+		container.innerHTML = '';
+		
+		if (selectedImages.length === 0) return;
+		
+		// Create a map of images by ID
+		const imagesMap = new Map();
+		directories.forEach(dir => {
+			dir.images.forEach(image => {
+				imagesMap.set(image.id, image);
+			});
+		});
+		
+		// Create path list container
+		const pathListContainer = document.createElement('div');
+		pathListContainer.className = 'imag-tools-path-list-container';
+		
+		// Create path list
+		selectedImages.forEach(imageId => {
+			const image = imagesMap.get(imageId);
+			if (!image) return;
+			
+			const extension = getPathExtension(image.path);
+			const baseName = getPathBaseName(image.path);
+			
+			const item = document.createElement('div');
+			item.className = 'imag-tools-path-list-item';
+			item.dataset.id = imageId;
+			
+			// Highlight active item
+			if (imageId === selectedImages[currentLightboxIndex]) {
+				item.classList.add('active');
+			}
+			
+			item.innerHTML = `
+            <div class="imag-tools-path-input-container">
+			<span class="imag-tools-path-basename">${baseName}</span>
+			<span class="imag-tools-path-extension">.${extension}</span>
+			<input type="text" class="imag-tools-path-input" value="">
+            </div>
+			`;
+			
+			pathListContainer.appendChild(item);
+		});
+		
+		container.appendChild(pathListContainer);
+	}
+	function applyTransformationsToElement(el) {
+		const zoomValue = zoomSelect.value;
+		const rotationValue = rotationSelect.value;
+		
+		el.style.objectFit = '';
+		el.style.width = '';
+		el.style.height = '';
+		
+		if (zoomValue === 'contain') {
+			el.style.objectFit = 'contain';
+			} else {
+			el.style.width = `${zoomValue}%`;
+			el.style.height = 'auto';
+		}
+		
+		el.style.transform = `rotate(${rotationValue}deg)`;
+	}
 	// Initialize
 	chooseDirectoryBtn.addEventListener('click', addDirectory);
 	zoomSelect.addEventListener('change', applyImageTransformations);
 	rotationSelect.addEventListener('change', applyImageTransformations);
 	
-zoomSelect.addEventListener('change', applyImageTransformations);
-rotationSelect.addEventListener('change', applyImageTransformations);
+	
+	zoomSelect.addEventListener('change', applyImageTransformations);
+	rotationSelect.addEventListener('change', applyImageTransformations);
 	// Close lightbox when clicking outside content
 	lightbox.addEventListener('click', function(e) {
 		if (e.target === lightbox) {
 			lightbox.style.display = 'none';
 			document.body.style.overflow = 'auto';
+		}
+	});
+	// When typing happens in any input field
+	pathContainer.addEventListener('input', function(e) {
+		// Check if we're in "All Selected Images" view and if typing is in a path input
+		if (lightboxViewMode === 'all' && e.target.classList.contains('imag-tools-path-input')) {
+			// Get the text that was typed
+			const text = e.target.value;
+			
+			// Update function panel if applicable
+			if (window.updateFunctionPanelFromPath) {
+				window.updateFunctionPanelFromPath(text);
+			}
+			
+			// Find ALL input fields in the container
+			const allInputs = pathContainer.querySelectorAll('.imag-tools-path-input');
+			
+			// Copy the text to ALL input fields
+			allInputs.forEach(input => {
+				input.value = text;
+			});
+		}
+	});
+	document.addEventListener('input', function(e) {
+		if (e.target.classList.contains('imag-tools-lightbox-image-path-input')) {
+			const text = e.target.value;
+			if (window.updateFunctionPanelFromPath) {
+				window.updateFunctionPanelFromPath(text);
+			}
 		}
 	});
 });
