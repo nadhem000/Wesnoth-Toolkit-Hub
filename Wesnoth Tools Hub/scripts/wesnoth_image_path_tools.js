@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	const selectedItemsContainer = document.getElementById('imag-tools-selected-items');
 	const lightboxImagePath = document.getElementById('imag-tools-lightbox-image-path');
 	
-	// NEW: View mode elements
+	// View mode elements
 	const viewModeSelect = document.getElementById('imag-tools-lightbox-view-mode');
 	const gridContainer = document.getElementById('imag-tools-lightbox-grid-container');
 	const modeIndicator = document.getElementById('imag-tools-lightbox-mode-indicator');
@@ -50,60 +50,136 @@ document.addEventListener('DOMContentLoaded', function() {
 	let selectedImages = [];
 	let currentLightboxIndex = 0;
 	let lightboxViewMode = 'single'; // 'single' or 'all'
+	let progressContainer, currentDirSpan, progressBar;
 	
 	// Add directory function
 	async function addDirectory() {
-		try {
-			// Request directory access
-			const handle = await window.showDirectoryPicker();
-			
-			// Create directory object
-			const directory = {
-				id: Date.now().toString(),
-				handle: handle,
-				name: handle.name,
-				images: []
-			};
-			
-			// Add to state
-			directories.push(directory);
-			
-			// Scan for images
-			await scanDirectoryForImages(directory, handle);
-			
-			// Render images
-			renderImages();
-			} catch (error) {
-			console.error('Error loading directory:', error);
-			alert('Error loading directory. Please try again.');
-		}
-	}
-	
-	// Recursive function to scan directory for images
-	async function scanDirectoryForImages(directory, handle) {
-		for await (const entry of handle.values()) {
-			if (entry.kind === 'file') {
-				const file = await entry.getFile();
-				const extension = entry.name.split('.').pop().toLowerCase();
-				
-				if (imageExtensions.includes(extension)) {
-					const url = URL.createObjectURL(file);
-					
-					directory.images.push({
-						id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-						name: entry.name,
-						path: `${directory.name}/${entry.name}`,
-						url: url,
-						file: file
-					});
-				}
-				} else if (entry.kind === 'directory') {
-				// Recursively scan subdirectories
-				await scanDirectoryForImages(directory, entry);
-			}
-		}
-	}
-	
+    try {
+        // Request directory access first
+        const handle = await window.showDirectoryPicker();
+        
+        // Now show progress UI
+        if (!progressContainer) {
+            progressContainer = document.createElement('div');
+            progressContainer.id = 'imag-tools-progress-container';
+            progressContainer.style.cssText = `
+                margin: 15px 0; 
+                background: rgba(0,0,0,0.2); 
+                padding: 10px; 
+                border-radius: 4px;
+                display: none;
+            `;
+            
+            const dirDisplay = document.createElement('div');
+            currentDirSpan = document.createElement('span');
+            currentDirSpan.style.fontWeight = 'bold';
+            dirDisplay.innerHTML = 'Scanning: ';
+            dirDisplay.appendChild(currentDirSpan);
+            
+            progressBar = document.createElement('progress');
+            progressBar.id = 'imag-tools-progress-bar';
+            progressBar.style.width = '100%';
+            progressBar.max = 100;
+            progressBar.value = 0;
+            
+            progressContainer.appendChild(dirDisplay);
+            progressContainer.appendChild(progressBar);
+            document.querySelector('.imag-tools-controls').after(progressContainer);
+        }
+        
+        // Show progress UI
+        progressContainer.style.display = 'block';
+        currentDirSpan.textContent = handle.name;
+        progressBar.value = 0;
+        
+        // Create directory object
+        const directory = {
+            id: Date.now().toString(),
+            handle: handle,
+            name: handle.name,
+            images: []
+        };
+        
+        // Add to state
+        directories.push(directory);
+        renderDirectories();
+        
+        // Scan for images
+        await scanDirectoryForImages(directory, handle);
+        
+        // Render images
+        renderImages();
+    } catch (error) {
+        console.error('Error loading directory:', error);
+        alert('Error loading directory. Please try again.');
+    } finally {
+        if (progressContainer) {
+            progressContainer.style.display = 'none';
+        }
+    }
+}
+
+// Recursive function to scan directory for images
+async function scanDirectoryForImages(directory, handle) {
+    let fileCount = 0;
+    let totalFiles = 0;
+    
+    // First pass: count files
+    for await (const entry of handle.values()) {
+        if (entry.kind === 'file') totalFiles++;
+    }
+    
+    // Second pass: process files
+    for await (const entry of handle.values()) {
+        if (entry.kind === 'file') {
+            fileCount++;
+            progressBar.value = (fileCount / totalFiles) * 100;
+            currentDirSpan.textContent = `${handle.name} (${fileCount}/${totalFiles})`;
+            
+            const file = await entry.getFile();
+            const extension = entry.name.split('.').pop().toLowerCase();
+            
+            if (imageExtensions.includes(extension)) {
+                const url = URL.createObjectURL(file);
+                
+                directory.images.push({
+                    id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+                    name: entry.name,
+                    path: `${directory.name}/${entry.name}`,
+                    url: url,
+                    file: file
+                });
+            }
+        } else if (entry.kind === 'directory') {
+            // Recursively scan subdirectories
+            await scanDirectoryForImages(directory, entry);
+        }
+    }
+}
+	//  render directories
+function renderDirectories() {
+    const container = document.getElementById('imag-tools-directories-container');
+    if (!container) return;
+    
+    container.innerHTML = '<h3>Loaded Directories</h3>';
+    
+    if (directories.length === 0) {
+        container.innerHTML += '<div class="imag-tools-empty-state">No directories loaded</div>';
+        return;
+    }
+    
+    const list = document.createElement('div');
+    list.className = 'imag-tools-directories-list';
+    
+    directories.forEach(dir => {
+        const dirElement = document.createElement('div');
+        dirElement.className = 'imag-tools-directory-item';
+        dirElement.textContent = dir.name;
+        list.appendChild(dirElement);
+    });
+    
+    container.appendChild(list);
+}
 	// Render images in grid
 	function renderImages() {
 		imagesContainer.innerHTML = '';
@@ -235,6 +311,8 @@ document.addEventListener('DOMContentLoaded', function() {
 			// Get base name and extension
 			const extension = getPathExtension(image.path);
 			const baseName = getPathBaseName(image.path);
+window.currentImageBase = baseName;
+window.currentImageExt = extension;
 			
 			// Update path display
 			lightboxImagePath.innerHTML = `
@@ -252,6 +330,25 @@ document.addEventListener('DOMContentLoaded', function() {
 		}
 	}
 	
+// get selected images
+function getSelectedImagesData() {
+    const images = [];
+    selectedImages.forEach(id => {
+        for (const dir of directories) {
+            const img = dir.images.find(i => i.id === id);
+            if (img) {
+                images.push({
+                    id: img.id,
+                    path: img.path,
+                    baseName: getPathBaseName(img.path),
+                    extension: getPathExtension(img.path)
+                });
+                break;
+            }
+        }
+    });
+    return images;
+}
 	// Update selected items list in sidebar
 	function updateSelectedItemsList() {
 		selectedItemsContainer.innerHTML = '';
@@ -306,13 +403,13 @@ document.addEventListener('DOMContentLoaded', function() {
 		}
 	}
 	
-	// NEW: Toggle view mode
+	// Toggle view mode
 	viewModeSelect.addEventListener('change', function() {
 		lightboxViewMode = this.value;
 		updateLightboxView();
 	});
 	
-	// NEW: Function to update lightbox view
+	// Function to update lightbox view
 	function updateLightboxView() {
 		if (lightboxViewMode === 'single') {
 			// Show single image view
@@ -337,7 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		}
 	}
 	
-	// NEW: Render grid view of all selected images
+	// Render grid view of all selected images
 	function renderAllSelectedImages() {
 		gridContainer.innerHTML = '';
 		
@@ -461,6 +558,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		
 		el.style.transform = `rotate(${rotationValue}deg)`;
 	}
+	
 	// Initialize
 	chooseDirectoryBtn.addEventListener('click', addDirectory);
 	zoomSelect.addEventListener('change', applyImageTransformations);
@@ -478,23 +576,23 @@ document.addEventListener('DOMContentLoaded', function() {
 	});
 	// When typing happens in any input field
 	pathContainer.addEventListener('input', function(e) {
-		// Check if we're in "All Selected Images" view and if typing is in a path input
-		if (lightboxViewMode === 'all' && e.target.classList.contains('imag-tools-path-input')) {
-			// Get the text that was typed
-			const text = e.target.value;
+		if (lightboxViewMode === 'all' && 
+			e.target.classList.contains('imag-tools-path-input')) {
 			
-			// Update function panel if applicable
+			const text = e.target.value;
+			const allInputs = pathContainer.querySelectorAll('.imag-tools-path-input');
+			
+			// Update ALL inputs with the same value
+			allInputs.forEach(input => {
+				if (input !== e.target) {
+					input.value = text;
+				}
+			});
+			
+			// Update function panel
 			if (window.updateFunctionPanelFromPath) {
 				window.updateFunctionPanelFromPath(text);
 			}
-			
-			// Find ALL input fields in the container
-			const allInputs = pathContainer.querySelectorAll('.imag-tools-path-input');
-			
-			// Copy the text to ALL input fields
-			allInputs.forEach(input => {
-				input.value = text;
-			});
 		}
 	});
 	document.addEventListener('input', function(e) {
@@ -505,4 +603,5 @@ document.addEventListener('DOMContentLoaded', function() {
 			}
 		}
 	});
+window.getSelectedImagesData = getSelectedImagesData;
 });

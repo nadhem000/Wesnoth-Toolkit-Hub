@@ -1,4 +1,3 @@
-// images_advanced_tools.js
 // Function data array
 const imageFunctions = [
 	{
@@ -102,7 +101,58 @@ const imageFunctions = [
 		]
 	}
 ];
-
+const advancedOptions = [
+  {
+    name: "ADJUST_ALPHA",
+    description: "Adjusts image transparency.",
+    parameters: [
+      { name: "amount", type: "slider", min: 0, max: 255, value: 128 }
+    ]
+  },
+  // New single-parameter options
+  {
+    name: "BRIGHTEN",
+    description: "Adjusts image brightness.",
+    parameters: [
+      { name: "amount", type: "slider", min: -100, max: 100, value: 0 }
+    ]
+  },
+  {
+    name: "CONTRAST",
+    description: "Adjusts image contrast.",
+    parameters: [
+      { 
+        name: "factor", 
+        type: "slider", 
+        min: 0, 
+        max: 300, 
+        value: 100,
+        convert: v => (v / 100).toFixed(1) // Converts 100→1.0, 150→1.5
+      }
+    ]
+  },
+  {
+    name: "O",
+    description: "Sets image opacity.",
+    parameters: [
+      { 
+        name: "opacity", 
+        type: "slider", 
+        min: 0, 
+        max: 100, 
+        value: 100,
+        convert: v => (v / 100).toFixed(1) // Converts 100→1.0, 70→0.7
+      }
+    ]
+  },
+  {
+    name: "R",
+    description: "Rotates the image.",
+    parameters: [
+      { name: "degrees", type: "slider", min: 0, max: 360, value: 0 }
+    ]
+  }
+];
 // Define slider parameters for each function
 const functionParameters = {
     '~ADJUST_ALPHA()': {min: 0, max: 255, value: 128, step: 1},
@@ -111,7 +161,92 @@ const functionParameters = {
     '~O()': {min: 0, max: 100, value: 70, step: 1},
     '~R()': {min: 0, max: 360, value: 0, step: 1}
 };
+function generateAdvancedOptions() {
+  let html = '';
+  advancedOptions.forEach(option => {
+    html += `<div class="option-row" id="option-${option.name}">`;
+    html += `<h4>${option.name}: ${option.description}</h4>`;
+    
+    option.parameters.forEach(param => {
+      // Generate slider input
+      html += `
+        <div class="param-group">
+          <label>${param.name}:</label>
+          <input type="range" 
+                 min="${param.min}" 
+                 max="${param.max}" 
+                 value="${param.value}"
+                 class="param-slider"
+                 data-option="${option.name}"
+                 data-param="${param.name}">
+          <span class="slider-value">${param.value}</span>
+        </div>
+      `;
+    });
+    
+    // Add Apply button
+    html += `<button onclick="applyAdvancedOption('${option.name}')">Apply</button>`;
+    html += `</div>`; // Close row
+  });
+  document.getElementById('advanced-options-container').innerHTML = html;
+  
+  // Add event listeners to sliders
+  document.querySelectorAll('.param-slider').forEach(slider => {
+    slider.addEventListener('input', function() {
+      const valueSpan = this.nextElementSibling;
+      valueSpan.textContent = this.value;
+    });
+  });
+}
+function applyAdvancedOption(optionName) {
+  const option = advancedOptions.find(opt => opt.name === optionName);
+  if (!option) return;
 
+  // Get current base image path
+  const basePath = document.getElementById('image-path').value;
+  
+  // Process parameters
+  const paramValues = option.parameters.map(param => {
+    const slider = document.querySelector(
+      `[data-option="${optionName}"][data-param="${param.name}"]`
+    );
+    const rawValue = slider.value;
+    
+    // Apply conversion if needed
+    return param.convert ? param.convert(rawValue) : rawValue;
+  });
+
+  // Generate new image path
+  const newPath = `${basePath}~${optionName}(${paramValues.join(',')})`;
+  updateImagePreview(newPath);
+}
+
+// Helper to update image preview
+function updateImagePreview(path) {
+  document.getElementById('image-preview').src = path;
+  document.getElementById('output-path').value = path;
+}
+function deduplicateFunctions(path) {
+    if (!path.includes('~')) return path;
+    
+    const firstTilde = path.indexOf('~');
+    const imageBase = path.substring(0, firstTilde);
+    const functionString = path.substring(firstTilde);
+    
+    // Split functions and keep last occurrence of each type
+    const functions = [];
+    const seen = new Set();
+    
+    functionString.split('~').filter(Boolean).reverse().forEach(func => {
+        const funcName = func.split('(')[0];
+        if (!seen.has(funcName)) {
+            functions.unshift(func);
+            seen.add(funcName);
+        }
+    });
+    
+    return imageBase + '~' + functions.join('~');
+}
 // Show function details when a button is clicked
 function showFunctionDetails(funcName) {
     const container = document.getElementById('imag-tools-function-details-container');
@@ -169,7 +304,7 @@ function showFunctionDetails(funcName) {
     actionButtons.className = 'imag-tools-func-actions';
     actionButtons.innerHTML = `
 	<button class="imag-tools-func-apply">Apply</button>
-	<button class="imag-tools-func-copy">Copy Path</button>
+	<button class="imag-tools-func-copy" id="imag-tools-copy-full-path">Copy Path</button>
 	<button class="imag-tools-func-close">Close</button>
     `;
     details.appendChild(actionButtons);
@@ -241,32 +376,50 @@ function applySliderValue(funcName, sample) {
 
 // Append value to path input
 function appendToPathInput(value) {
-	const viewMode = window.wesnothImageTools?.lightboxViewMode || 'single';
-	
-	if (viewMode === 'single') {
-		const input = document.querySelector('.imag-tools-lightbox-image-path-input');
-		if (input) {
-			input.value += value;
-			input.dispatchEvent(new Event('input'));
-		}
-	} 
-	else if (viewMode === 'all') {
-		const activeGridItem = document.querySelector('.imag-tools-grid-item.active');
-		if (activeGridItem) {
-			const input = activeGridItem.querySelector('.imag-tools-grid-item-path-input');
-			if (input) {
-				input.value += value;
-				input.dispatchEvent(new Event('input'));
-			}
-		}
-	}
+    const viewMode = window.wesnothImageTools?.lightboxViewMode || 'single';
+    
+    if (viewMode === 'single') {
+        const input = document.querySelector('.imag-tools-lightbox-image-path-input');
+        if (input) {
+            input.value = deduplicateFunctions(input.value + value);
+            input.dispatchEvent(new Event('input'));
+        }
+    } 
+    else if (viewMode === 'all') {
+        const allInputs = document.querySelectorAll('.imag-tools-path-input');
+        allInputs.forEach(input => {
+            input.value = deduplicateFunctions(input.value + value);
+            input.dispatchEvent(new Event('input'));
+        });
+    }
 }
 
 // Copy value to clipboard
 function copyToClipboard(value) {
-	navigator.clipboard.writeText(value).then(() => {
-		alert('Copied to clipboard!');
-	});
+    const viewMode = window.wesnothImageTools?.lightboxViewMode || 'single';
+    let textToCopy = '';
+
+    if (viewMode === 'single') {
+        const base = window.currentImageBase || '';
+        const ext = window.currentImageExt ? '.' + window.currentImageExt : '';
+        textToCopy = base + ext + value;
+    } 
+    else if (viewMode === 'all') {
+        // Check if getSelectedImagesData exists
+        if (typeof window.getSelectedImagesData === 'function') {
+            const selectedImages = window.getSelectedImagesData();
+            textToCopy = selectedImages.map(img => {
+                return img.path + value;
+            }).join('\n');
+        } else {
+            // Fallback in case function isn't available
+            textToCopy = 'Error: Could not get image data';
+        }
+    }
+
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        alert('Copied to clipboard!');
+    });
 }
 
 // Initialize when DOM is loaded
@@ -284,7 +437,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			}
 		});
 	});
-	// NEW: Parse function string and extract name/params
+	// Parse function string and extract name/params
 	function parseFunctionString(funcString) {
 		const match = funcString.match(/^(~[A-Z_]+)\(([^)]*)\)/);
 		if (!match) return null;
@@ -295,7 +448,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		};
 	}
 	
-	// NEW: Update function panel based on path input
+	// Update function panel based on path input
 	// Update this function
 	function updateFunctionPanelFromPath(text) {
 		const funcData = parseFunctionString(text);
@@ -326,7 +479,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			}
 		}, 10);
 	}
-	// NEW: Helper function to extract function name
+	// Helper function to extract function name
 	function extractFunctionName(sample) {
 		// Match the function signature without parameters
 		const match = sample.match(/^([^\(]+)\(\)/);

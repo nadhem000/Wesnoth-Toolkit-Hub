@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Image Coordinate Tracker</title>
+    <style>
+        /* Base styles with prefix */
+        .map-track-container {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --accent: #f72585;
+            --dark: #1a1a2e;
+            --darker: #0d0d1a;
+            --light: #b8c1ec;
+            --lighter: #e6e6ff;
+            --success: #4cc9f0;
+            --error: #f72585;
+            --warning: #ffd166;
+            
+            background: linear-gradient(135deg, var(--darker), var(--dark));
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: var(--lighter);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .map-track-main {
+            background: rgba(25, 30, 50, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
+            padding: 30px;
+            max-width: 1200px;
+            width: 100%;
+            border: 1px solid var(--primary);
+        }
+        
+        .map-track-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(67, 97, 238, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .map-track-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: map-track-rotate 20s linear infinite;
+            z-index: 0;
+        }
+        
+        .map-track-title {
+            color: white;
+            font-size: 2.8rem;
+            margin-bottom: 15px;
+            text-shadow: 0 0 15px rgba(76, 201, 240, 0.7);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .map-track-subtitle {
+            color: var(--lighter);
+            font-size: 1.4rem;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .map-track-section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: rgba(30, 35, 60, 0.85);
+            border-radius: 15px;
+            border: 1px solid var(--primary);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        .map-track-section-title {
+            color: var(--success);
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+        }
+        
+        .map-track-dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .map-track-controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .map-track-control-group {
+            margin-bottom: 20px;
+        }
+        
+        .map-track-control-title {
+            color: var(--light);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.3rem;
+        }
+        
+        .map-track-markers-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .map-track-marker-option {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            background: rgba(50, 60, 90, 0.7);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .map-track-marker-option:hover {
+            transform: translateY(-5px) scale(1.05);
+            border-color: var(--success);
+            box-shadow: 0 8px 20px rgba(76, 201, 240, 0.4);
+        }
+        
+        .map-track-marker-option.active {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(247, 37, 133, 0.6);
+            animation: map-track-pulse 1.5s infinite;
+        }
+        
+        .map-track-coord-inputs {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .map-track-input-group {
+            flex: 1;
+        }
+        
+        .map-track-input-label {
+            display: block;
+            color: var(--light);
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+        
+        .map-track-input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            border: 2px solid var(--primary);
+            background: rgba(15, 20, 40, 0.9);
+            color: white;
+            font-size: 1.2rem;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+        }
+        
+        .map-track-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(247, 37, 133, 0.5);
+            transform: scale(1.02);
+        }
+        
+        .map-track-btn {
+            padding: 14px 28px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.4);
+        }
+        
+        .map-track-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(247, 37, 133, 0.5);
+            background: linear-gradient(135deg, var(--accent), var(--primary));
+        }
+        
+        .map-track-btn:active {
+            transform: translateY(2px);
+        }
+        
+        .map-track-btn-secondary {
+            background: linear-gradient(135deg, #3a0ca3, #7209b7);
+        }
+        
+        .map-track-btn-tertiary {
+            background: linear-gradient(135deg, #2a9d8f, #1d3557);
+        }
+        
+        .map-track-image-container {
+            position: relative;
+            border: 3px solid var(--primary);
+            border-radius: 15px;
+            overflow: hidden;
+            background: linear-gradient(45deg, #0f3460, #1a1a2e);
+            margin: 0 auto;
+            box-shadow: 0 0 30px rgba(67, 97, 238, 0.5);
+            min-height: 350px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .map-track-image-container img {
+            display: block;
+            max-width: 100%;
+            max-height: 500px;
+            cursor: crosshair;
+            transition: transform 0.3s;
+        }
+        
+        .map-track-image-container img:hover {
+            transform: scale(1.02);
+        }
+        
+        .map-track-image-placeholder {
+            color: var(--light);
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .map-track-coords-display {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 25px 0;
+            padding: 25px;
+            background: linear-gradient(135deg, #2c3e50, #4a6491);
+            border-radius: 15px;
+            border: 1px solid var(--primary);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+        
+        .map-track-coord {
+            text-align: center;
+            background: rgba(25, 30, 50, 0.9);
+            padding: 25px 45px;
+            border-radius: 15px;
+            min-width: 200px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            border: 2px solid var(--primary);
+            transition: all 0.3s;
+        }
+        
+        .map-track-coord:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(76, 201, 240, 0.4);
+        }
+        
+        .map-track-coord-label {
+            color: var(--light);
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+        }
+        
+        .map-track-coord-value {
+            color: white;
+            font-size: 3.5rem;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 20px rgba(76, 201, 240, 0.8);
+        }
+        
+        .map-track-command-interface {
+            margin-top: 25px;
+        }
+        
+        .map-track-command-input {
+            width: 100%;
+            height: 160px;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid var(--primary);
+            background: rgba(15, 20, 40, 0.9);
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            resize: vertical;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+        
+        .map-track-command-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(247, 37, 133, 0.5);
+        }
+        
+        .map-track-command-buttons {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .map-track-command-output {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(15, 20, 40, 0.9);
+            border-radius: 15px;
+            border: 2px solid var(--primary);
+            font-family: 'Courier New', monospace;
+            max-height: 180px;
+            overflow-y: auto;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        .map-track-command-output p {
+            margin-bottom: 12px;
+            padding: 8px;
+            border-radius: 8px;
+        }
+        
+        .map-track-file-upload {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .map-track-file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+            border-radius: 12px;
+        }
+        
+        .map-track-file-input {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .map-track-file-input-button {
+            background: linear-gradient(135deg, #2a9d8f, #1d3557);
+            padding: 16px 25px;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .map-track-file-input-button:hover {
+            background: linear-gradient(135deg, #1d3557, #2a9d8f);
+            transform: translateY(-3px);
+        }
+        
+        .map-track-file-name {
+            color: var(--light);
+            font-size: 1.1rem;
+            text-align: center;
+            margin-top: 10px;
+            word-break: break-all;
+        }
+        
+        .map-track-marker {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .map-track-dot {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background-color: var(--accent);
+            box-shadow: 0 0 0 3px white, 0 0 15px rgba(0,0,0,0.8);
+        }
+        
+        .map-track-cross {
+            width: 32px;
+            height: 32px;
+        }
+        
+        .map-track-cross:before, .map-track-cross:after {
+            content: '';
+            position: absolute;
+            background-color: var(--success);
+        }
+        
+        .map-track-cross:before {
+            left: 50%;
+            width: 4px;
+            margin-left: -2px;
+            height: 100%;
+        }
+        
+        .map-track-cross:after {
+            top: 50%;
+            height: 4px;
+            margin-top: -2px;
+            width: 100%;
+        }
+        
+        .map-track-circle {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--primary);
+            border-radius: 50%;
+            background: transparent;
+            box-shadow: 0 0 15px rgba(67, 97, 238, 0.8);
+        }
+        
+        .map-track-target {
+            width: 32px;
+            height: 32px;
+            border: 2px solid var(--warning);
+            border-radius: 50%;
+            background: transparent;
+            box-shadow: 0 0 15px rgba(255, 209, 102, 0.8);
+        }
+        
+        .map-track-target:before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            background: var(--warning);
+            border-radius: 50%;
+        }
+        
+        .map-track-marker-label {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        
+        .map-track-footer {
+            text-align: center;
+            margin-top: 40px;
+            color: var(--light);
+            font-size: 1.1rem;
+            padding-top: 25px;
+            border-top: 1px solid var(--primary);
+        }
+        
+        /* Animations */
+        @keyframes map-track-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(247, 37, 133, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(247, 37, 133, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(247, 37, 133, 0); }
+        }
+        
+        @keyframes map-track-rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes map-track-bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        
+        .map-track-bounce {
+            animation: map-track-bounce 2s infinite;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 1000px) {
+            .map-track-dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .map-track-controls-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .map-track-coords-display {
+                flex-direction: column;
+                align-items: center;
+                gap: 25px;
+            }
+            
+            .map-track-coord {
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .map-track-title {
+                font-size: 2.3rem;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .map-track-main {
+                padding: 15px;
+            }
+            
+            .map-track-title {
+                font-size: 2rem;
+            }
+            
+            .map-track-subtitle {
+                font-size: 1.1rem;
+            }
+            
+            .map-track-section {
+                padding: 15px;
+            }
+            
+            .map-track-coord-inputs {
+                flex-direction: column;
+            }
+            
+            .map-track-command-buttons {
+                flex-direction: column;
+            }
+            
+            .map-track-btn {
+                width: 100%;
+            }
+        }
+
+        /* New styles for history panel */
+        .map-track-history-panel {
+            background: rgba(25, 30, 50, 0.8);
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--primary);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .map-track-history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .map-track-history-title {
+            color: var(--success);
+            font-size: 1.2rem;
+        }
+        
+        .map-track-history-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .map-track-history-item {
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            background: rgba(40, 45, 70, 0.6);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            border-left: 3px solid var(--accent);
+        }
+        
+        .map-track-history-item:hover {
+            background: rgba(50, 60, 90, 0.8);
+            transform: translateX(5px);
+        }
+        
+        .map-track-history-item.active {
+            background: rgba(67, 97, 238, 0.3);
+            border-left: 3px solid var(--success);
+        }
+        
+        /* New styles for save/cancel buttons */
+        .map-track-save-cancel {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .map-track-btn-save {
+            background: linear-gradient(135deg, #2a9d8f, #1d3557);
+        }
+        
+        .map-track-btn-cancel {
+            background: linear-gradient(135deg, #e63946, #d90429);
+        }
+        
+        /* New styles for download buttons */
+        .map-track-download-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body class="map-track-container">
+    <div class="map-track-main">
+        <!-- Header with instructions -->
+        <header class="map-track-header">
+            <h1 class="map-track-title">Advanced Image Coordinate Tracker</h1>
+            <p class="map-track-subtitle">
+                Track coordinates on your images like classic Paint! Upload an image, hover to see coordinates, 
+                click to place markers, or use the command interface. All processing happens locally in your browser 
+                for maximum security. Get started by uploading an image below.
+            </p>
+        </header>
+        
+        <!-- Dashboard with controls and command interface -->
+        <div class="map-track-dashboard">
+            <div class="map-track-section">
+                <h2 class="map-track-section-title">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM8 12C8 9.79 9.79 8 12 8C14.21 8 16 9.79 16 12C16 14.21 14.21 16 12 16C9.79 16 8 14.21 8 12ZM12 6C8.69 6 6 8.69 6 12C6 15.31 8.69 18 12 18C15.31 18 18 15.31 18 12C18 8.69 15.31 6 12 6Z" fill="#4cc9f0"/>
+                    </svg>
+                    Controls Panel
+                </h2>
+                
+                <div class="map-track-controls-grid">
+                    <!-- File Upload -->
+                    <div class="map-track-control-group">
+                        <h3 class="map-track-control-title">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4C9.11 4 6.6 5.64 5.35 8.04C2.34 8.36 0 10.91 0 14C0 17.31 2.69 20 6 20H19C21.76 20 24 17.76 24 15C24 12.36 21.95 10.22 19.35 10.04ZM14 13V17H10V13H7L12 8L17 13H14Z" fill="#b8c1ec"/>
+                            </svg>
+                            Upload Image
+                        </h3>
+                        <div class="map-track-file-upload">
+                            <div class="map-track-file-input-wrapper">
+                                <div class="map-track-file-input-button">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4C9.11 4 6.6 5.64 5.35 8.04C2.34 8.36 0 10.91 0 14C0 17.31 2.69 20 6 20H19C21.76 20 24 17.76 24 15C24 12.36 21.95 10.22 19.35 10.04ZM14 13V17H10V13H7L12 8L17 13H14Z" fill="white"/>
+                                    </svg>
+                                    Choose Image
+                                </div>
+                                <input type="file" id="map-track-image-upload" class="map-track-file-input" accept="image/*">
+                            </div>
+                            <div id="map-track-file-name" class="map-track-file-name">No file selected</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Marker Selection -->
+                    <div class="map-track-control-group">
+                        <h3 class="map-track-control-title">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9C9.5 7.62 10.62 6.5 12 6.5C13.38 6.5 14.5 7.62 14.5 9C14.5 10.38 13.38 11.5 12 11.5Z" fill="#b8c1ec"/>
+                            </svg>
+                            Marker Type
+                        </h3>
+                        <div class="map-track-markers-container">
+                            <div class="map-track-marker-option active" data-type="dot">
+                                <div class="map-track-dot"></div>
+                            </div>
+                            <div class="map-track-marker-option" data-type="cross">
+                                <div class="map-track-cross"></div>
+                            </div>
+                            <div class="map-track-marker-option" data-type="circle">
+                                <div class="map-track-circle"></div>
+                            </div>
+                            <div class="map-track-marker-option" data-type="target">
+                                <div class="map-track-target"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Manual Coordinate Input -->
+                    <div class="map-track-control-group">
+                        <h3 class="map-track-control-title">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M13 7H11V9H13V7ZM13 11H11V17H13V11ZM12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill="#b8c1ec"/>
+                            </svg>
+                            Manual Placement
+                        </h3>
+                        <div class="map-track-coord-inputs">
+                            <div class="map-track-input-group">
+                                <label class="map-track-input-label">X Coordinate</label>
+                                <input type="number" id="map-track-x-input" min="0" value="0" class="map-track-input">
+                            </div>
+                            <div class="map-track-input-group">
+                                <label class="map-track-input-label">Y Coordinate</label>
+                                <input type="number" id="map-track-y-input" min="0" value="0" class="map-track-input">
+                            </div>
+                        </div>
+                        <button class="map-track-btn" id="map-track-place-marker-btn">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2ZM16 9H13V6H11V9H8V11H11V14H13V11H16V9Z" fill="white"/>
+                            </svg>
+                            Place Marker
+                        </button>
+                    </div>
+                    
+                    <!-- Clear Controls -->
+                    <div class="map-track-control-group">
+                        <h3 class="map-track-control-title">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z" fill="#b8c1ec"/>
+                            </svg>
+                            Clear Controls
+                        </h3>
+                        <div class="map-track-command-buttons">
+                            <button class="map-track-btn map-track-btn-secondary" id="map-track-clear-markers-btn">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M15 16H9V18H15V16ZM12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill="white"/>
+                                </svg>
+                                Clear Markers
+                            </button>
+                            <button class="map-track-btn map-track-btn-secondary" id="map-track-clear-output-btn">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z" fill="white"/>
+                                </svg>
+                                Clear Output
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- NEW: Save/Cancel buttons -->
+                    <div class="map-track-control-group">
+                        <h3 class="map-track-control-title">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M17 3H5C3.89 3 3 3.9 3 5V19C3 20.1 3.89 21 5 21H19C20.1 21 21 20.1 21 19V7L17 3ZM12 19C10.34 19 9 17.66 9 16C9 14.34 10.34 13 12 13C13.66 13 15 14.34 15 16C15 17.66 13.66 19 12 19ZM15 9H5V5H15V9Z" fill="#b8c1ec"/>
+                            </svg>
+                            Project Management
+                        </h3>
+                        <div class="map-track-save-cancel">
+                            <button class="map-track-btn map-track-btn-save" id="map-track-save-btn">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M17 3H5C3.89 3 3 3.9 3 5V19C3 20.1 3.89 21 5 21H19C20.1 21 21 20.1 21 19V7L17 3ZM12 19C10.34 19 9 17.66 9 16C9 14.34 10.34 13 12 13C13.66 13 15 14.34 15 16C15 17.66 13.66 19 12 19ZM15 9H5V5H15V9Z" fill="white"/>
+                                </svg>
+                                Save Project
+                            </button>
+                            <button class="map-track-btn map-track-btn-cancel" id="map-track-cancel-btn">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z" fill="white"/>
+                                </svg>
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- NEW: Download buttons -->
+                    <div class="map-track-control-group">
+                        <h3 class="map-track-control-title">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M19 9H15V3H9V9H5L12 16L19 9ZM5 18V20H19V18H5Z" fill="#b8c1ec"/>
+                            </svg>
+                            Export Data
+                        </h3>
+                        <div class="map-track-download-buttons">
+                            <button class="map-track-btn" id="map-track-download-image-btn">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M19 9H15V3H9V9H5L12 16L19 9ZM5 18V20H19V18H5Z" fill="white"/>
+                                </svg>
+                                Download Image
+                            </button>
+                            <button class="map-track-btn map-track-btn-tertiary" id="map-track-download-markers-btn">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M19 9H15V3H9V9H5L12 16L19 9ZM5 18V20H19V18H5Z" fill="white"/>
+                                </svg>
+                                Download Markers
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NEW: Undo/Redo/History panel -->
+                <div class="map-track-history-panel">
+                    <div class="map-track-history-header">
+                        <div class="map-track-history-title">Marker History</div>
+                        <div class="map-track-history-actions">
+                            <button class="map-track-btn" id="map-track-undo-btn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12.5 8C9.85 8 7.45 9 5.6 10.6L2 7V16H11L7.38 12.38C8.77 11.22 10.54 10.5 12.5 10.5C16.04 10.5 19.05 12.81 20.1 16L22.47 15.22C21.08 11.03 17.15 8 12.5 8Z" fill="white"/>
+                                </svg>
+                                Undo
+                            </button>
+                            <button class="map-track-btn" id="map-track-redo-btn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M18.4 10.6C16.55 9 14.15 8 11.5 8C6.85 8 2.92 11.03 1.54 15.22L3.9 16C4.95 12.81 7.95 10.5 11.5 10.5C13.45 10.5 15.23 11.22 16.62 12.38L13 16H22V7L18.4 10.6Z" fill="white"/>
+                                </svg>
+                                Redo
+                            </button>
+                        </div>
+                    </div>
+                    <div id="map-track-history-list"></div>
+                </div>
+            </div>
+            
+            <!-- Command Interface Panel -->
+            <div class="map-track-section">
+                <h2 class="map-track-section-title">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 18H4V8H20V18ZM4 6H20V6H4V6Z" fill="#4cc9f0"/>
+                    </svg>
+                    Command Interface
+                </h2>
+                
+                <div class="map-track-command-interface">
+                    <textarea id="map-track-command-input" class="map-track-command-input" placeholder="Enter commands to place markers (e.g. {new_journey 230 56})&#10;Multiple commands allowed, one per line&#10;&#10;Supported commands:&#10;  {new_journey x y} - Places a dot marker&#10;  {dot x y} - Places a dot marker&#10;  {cross x y} - Places a cross marker&#10;  {circle x y} - Places a circle marker&#10;  {target x y} - Places a target marker"></textarea>
+                    
+                    <div class="map-track-command-buttons">
+                        <button class="map-track-btn" id="map-track-run-commands-btn">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M8 5V19L19 12L8 5Z" fill="white"/>
+                            </svg>
+                            Run Commands
+                        </button>
+                        <button class="map-track-btn map-track-btn-tertiary" id="map-track-generate-template-btn">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20ZM8 15.01L9.41 16.42L11 14.84V19H13V14.84L14.59 16.43L16 15.01L12.01 11L8 15.01Z" fill="white"/>
+                            </svg>
+                            Generate Template
+                        </button>
+                    </div>
+                    
+                    <div class="map-track-command-output" id="map-track-command-output">
+                        <p>Command output will appear here...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Image Container -->
+        <div class="map-track-section">
+            <h2 class="map-track-section-title">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 19V5C21 3.9 20.1 3 19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19ZM8.5 13.5L11 16.51L14.5 12L19 18H5L8.5 13.5Z" fill="#4cc9f0"/>
+                </svg>
+                Image Preview
+            </h2>
+            
+            <div class="map-track-image-container" id="map-track-image-container">
+                <div class="map-track-image-placeholder map-track-bounce">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M21 19V5C21 3.9 20.1 3 19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19ZM8.5 13.5L11 16.51L14.5 12L19 18H5L8.5 13.5Z" fill="#4361ee"/>
+                    </svg>
+                    <h3>Upload an Image to Get Started</h3>
+                    <p>Use the upload button above to select an image</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Coordinate Display -->
+        <div class="map-track-coords-display">
+            <div class="map-track-coord">
+                <div class="map-track-coord-label">X Coordinate</div>
+                <div id="map-track-x-coord" class="map-track-coord-value">0</div>
+            </div>
+            <div class="map-track-coord">
+                <div class="map-track-coord-label">Y Coordinate</div>
+                <div id="map-track-y-coord" class="map-track-coord-value">0</div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="map-track-footer">
+            <p>© 2023 Image Coordinate Tracker | All processing happens locally in your browser</p>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get DOM elements with prefix
+            const imageContainer = document.getElementById('map-track-image-container');
+            const imageUpload = document.getElementById('map-track-image-upload');
+            const fileName = document.getElementById('map-track-file-name');
+            const xCoord = document.getElementById('map-track-x-coord');
+            const yCoord = document.getElementById('map-track-y-coord');
+            const xInput = document.getElementById('map-track-x-input');
+            const yInput = document.getElementById('map-track-y-input');
+            const placeMarkerBtn = document.getElementById('map-track-place-marker-btn');
+            const markerOptions = document.querySelectorAll('.map-track-marker-option');
+            const commandInput = document.getElementById('map-track-command-input');
+            const runCommandsBtn = document.getElementById('map-track-run-commands-btn');
+            const clearMarkersBtn = document.getElementById('map-track-clear-markers-btn');
+            const clearOutputBtn = document.getElementById('map-track-clear-output-btn');
+            const generateTemplateBtn = document.getElementById('map-track-generate-template-btn');
+            const commandOutput = document.getElementById('map-track-command-output');
+            
+            // NEW: Get new buttons
+            const undoBtn = document.getElementById('map-track-undo-btn');
+            const redoBtn = document.getElementById('map-track-redo-btn');
+            const saveBtn = document.getElementById('map-track-save-btn');
+            const cancelBtn = document.getElementById('map-track-cancel-btn');
+            const downloadImageBtn = document.getElementById('map-track-download-image-btn');
+            const downloadMarkersBtn = document.getElementById('map-track-download-markers-btn');
+            const historyList = document.getElementById('map-track-history-list');
+            
+            // Initialize variables
+            let currentMarkerType = 'dot';
+            let markers = [];
+            let currentImage = null;
+            
+            // NEW: History management
+            let historyStack = []; // Store complete marker states
+            let undoStack = []; // Store states for redo
+            let currentHistoryIndex = -1;
+            
+            // NEW: Initialize history
+            function initHistory() {
+                historyStack = [];
+                undoStack = [];
+                currentHistoryIndex = -1;
+                updateHistoryUI();
+                saveStateToHistory();
+            }
+            
+            // NEW: Save current state to history
+            function saveStateToHistory() {
+                // Only save if state has changed
+                const currentState = JSON.stringify(markers);
+                if (historyStack.length > 0 && 
+                    currentState === JSON.stringify(historyStack[historyStack.length - 1])) {
+                    return;
+                }
+                
+                // Push current state to history
+                historyStack.push(JSON.parse(JSON.stringify(markers)));
+                currentHistoryIndex = historyStack.length - 1;
+                
+                // Clear redo stack when new action is performed
+                undoStack = [];
+                
+                updateHistoryUI();
+            }
+            
+            // NEW: Update history UI
+            function updateHistoryUI() {
+                historyList.innerHTML = '';
+                
+                if (historyStack.length === 0) {
+                    historyList.innerHTML = '<div class="map-track-history-item">No history yet</div>';
+                    return;
+                }
+                
+                historyStack.forEach((state, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'map-track-history-item';
+                    if (index === currentHistoryIndex) {
+                        item.classList.add('active');
+                    }
+                    
+                    const markerCount = state.length;
+                    const lastAction = markerCount > 0 ? 
+                        `Last: (${state[state.length-1].x}, ${state[state.length-1].y})` : 
+                        'No markers';
+                    
+                    item.textContent = `State ${index+1}: ${markerCount} markers - ${lastAction}`;
+                    
+                    // Restore state on click
+                    item.addEventListener('click', () => {
+                        restoreHistoryState(index);
+                    });
+                    
+                    historyList.appendChild(item);
+                });
+                
+                // Scroll to bottom
+                historyList.scrollTop = historyList.scrollHeight;
+            }
+            
+            // NEW: Restore history state
+            function restoreHistoryState(index) {
+                if (index < 0 || index >= historyStack.length) return;
+                
+                markers = JSON.parse(JSON.stringify(historyStack[index]));
+                currentHistoryIndex = index;
+                renderMarkers();
+                updateHistoryUI();
+            }
+            
+            // NEW: Undo function
+            function undo() {
+                if (currentHistoryIndex > 0) {
+                    // Save current state to redo stack
+                    undoStack.push(JSON.parse(JSON.stringify(markers)));
+                    
+                    // Move to previous state
+                    currentHistoryIndex--;
+                    markers = JSON.parse(JSON.stringify(historyStack[currentHistoryIndex]));
+                    renderMarkers();
+                    updateHistoryUI();
+                    showOutput('Undo successful', 'success');
+                } else {
+                    showOutput('Nothing to undo', 'info');
+                }
+            }
+            
+            // NEW: Redo function
+            function redo() {
+                if (undoStack.length > 0) {
+                    // Save current state to history
+                    historyStack.push(JSON.parse(JSON.stringify(markers)));
+                    currentHistoryIndex = historyStack.length - 1;
+                    
+                    // Restore from undo stack
+                    markers = undoStack.pop();
+                    renderMarkers();
+                    saveStateToHistory();
+                    showOutput('Redo successful', 'success');
+                } else {
+                    showOutput('Nothing to redo', 'info');
+                }
+            }
+            
+            // NEW: Save project to localStorage
+            function saveProject() {
+                if (!currentImage) {
+                    showOutput('Please upload an image first', 'error');
+                    return;
+                }
+                
+                const project = {
+                    imageData: currentImage.src,
+                    markers: markers,
+                    fileName: fileName.textContent
+                };
+                
+                localStorage.setItem('mapTrackProject', JSON.stringify(project));
+                showOutput('Project saved successfully', 'success');
+            }
+            
+            // NEW: Load project from localStorage
+            function loadProject() {
+                const projectData = localStorage.getItem('mapTrackProject');
+                if (!projectData) {
+                    showOutput('No saved project found', 'info');
+                    return;
+                }
+                
+                try {
+                    const project = JSON.parse(projectData);
+                    
+                    // Load image
+                    const img = new Image();
+                    img.onload = () => {
+                        // Clear previous markers
+                        clearMarkers();
+                        
+                        // Set image
+                        imageContainer.innerHTML = '';
+                        imageContainer.appendChild(img);
+                        currentImage = img;
+                        
+                        // Set file name
+                        fileName.textContent = project.fileName || 'Saved project';
+                        
+                        // Set up event listeners
+                        setupImageListeners(img);
+                        
+                        // Load markers
+                        markers = project.markers || [];
+                        renderMarkers();
+                        
+                        // Save to history
+                        saveStateToHistory();
+                        
+                        showOutput('Project loaded successfully', 'success');
+                    };
+                    img.src = project.imageData;
+                } catch (e) {
+                    showOutput('Error loading project: ' + e.message, 'error');
+                }
+            }
+            
+            // NEW: Cancel/reset function
+            function cancelProject() {
+                if (confirm('Are you sure you want to cancel? All unsaved changes will be lost.')) {
+                    // Clear image and markers
+                    imageContainer.innerHTML = `
+                        <div class="map-track-image-placeholder map-track-bounce">
+                            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M21 19V5C21 3.9 20.1 3 19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19ZM8.5 13.5L11 16.51L14.5 12L19 18H5L8.5 13.5Z" fill="#4361ee"/>
+                            </svg>
+                            <h3>Upload an Image to Get Started</h3>
+                            <p>Use the upload button above to select an image</p>
+                        </div>
+                    `;
+                    
+                    // Reset variables
+                    currentImage = null;
+                    markers = [];
+                    fileName.textContent = 'No file selected';
+                    xCoord.textContent = '0';
+                    yCoord.textContent = '0';
+                    xInput.value = '0';
+                    yInput.value = '0';
+                    
+                    // Clear command output
+                    commandOutput.innerHTML = '<p>Command output cleared</p>';
+                    
+                    // Clear history
+                    initHistory();
+                    
+                    showOutput('Project cancelled', 'info');
+                }
+            }
+            
+            // NEW: Download image with markers
+            function downloadImage() {
+                if (!currentImage) {
+                    showOutput('Please upload an image first', 'error');
+                    return;
+                }
+                
+                try {
+                    // Create canvas
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Set canvas size to match image
+                    canvas.width = currentImage.naturalWidth;
+                    canvas.height = currentImage.naturalHeight;
+                    
+                    // Draw image
+                    ctx.drawImage(currentImage, 0, 0);
+                    
+                    // Draw markers
+                    markers.forEach(marker => {
+                        const x = marker.x;
+                        const y = marker.y;
+                        
+                        ctx.beginPath();
+                        ctx.fillStyle = '#f72585';
+                        ctx.strokeStyle = 'white';
+                        ctx.lineWidth = 2;
+                        
+                        switch(marker.type) {
+                            case 'dot':
+                                ctx.arc(x, y, 8, 0, Math.PI * 2);
+                                ctx.fill();
+                                ctx.stroke();
+                                break;
+                            case 'cross':
+                                ctx.lineWidth = 3;
+                                ctx.beginPath();
+                                ctx.moveTo(x - 10, y);
+                                ctx.lineTo(x + 10, y);
+                                ctx.moveTo(x, y - 10);
+                                ctx.lineTo(x, y + 10);
+                                ctx.stroke();
+                                break;
+                            case 'circle':
+                                ctx.beginPath();
+                                ctx.arc(x, y, 12, 0, Math.PI * 2);
+                                ctx.stroke();
+                                break;
+                            case 'target':
+                                ctx.beginPath();
+                                ctx.arc(x, y, 15, 0, Math.PI * 2);
+                                ctx.stroke();
+                                
+                                ctx.beginPath();
+                                ctx.arc(x, y, 8, 0, Math.PI * 2);
+                                ctx.stroke();
+                                
+                                ctx.beginPath();
+                                ctx.arc(x, y, 3, 0, Math.PI * 2);
+                                ctx.fill();
+                                break;
+                        }
+                        
+                        // Draw coordinates text
+                        ctx.font = '12px Arial';
+                        ctx.fillStyle = 'white';
+                        ctx.fillText(`(${x}, ${y})`, x + 15, y - 15);
+                    });
+                    
+                    // Create download link
+                    const link = document.createElement('a');
+                    link.download = 'image-with-markers.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    
+                    showOutput('Image downloaded successfully', 'success');
+                } catch (e) {
+                    showOutput('Error downloading image: ' + e.message, 'error');
+                }
+            }
+            
+            // NEW: Download markers as JSON
+            function downloadMarkers() {
+                if (markers.length === 0) {
+                    showOutput('No markers to download', 'info');
+                    return;
+                }
+                
+                try {
+                    const dataStr = JSON.stringify(markers, null, 2);
+                    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                    
+                    const link = document.createElement('a');
+                    link.setAttribute('href', dataUri);
+                    link.setAttribute('download', 'markers.json');
+                    link.click();
+                    
+                    showOutput('Markers downloaded successfully', 'success');
+                } catch (e) {
+                    showOutput('Error downloading markers: ' + e.message, 'error');
+                }
+            }
+            
+            // Set up marker selection
+            markerOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    // Remove active class from all options
+                    markerOptions.forEach(opt => opt.classList.remove('active'));
+                    // Add active class to clicked option
+                    option.classList.add('active');
+                    // Update current marker type
+                    currentMarkerType = option.getAttribute('data-type');
+                });
+            });
+            
+            // Handle image upload
+            imageUpload.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                // Display file name
+                fileName.textContent = file.name;
+                
+                // Validate file type
+                if (!file.type.match('image.*')) {
+                    showOutput('Please select a valid image file (JPEG, PNG, etc.)', 'error');
+                    return;
+                }
+                
+                // Validate file size (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    showOutput('File size exceeds 5MB limit', 'error');
+                    return;
+                }
+                
+                // Use FileReader to safely load image
+                const reader = new FileReader();
+                
+                reader.onload = (event) => {
+                    // Clear previous markers
+                    clearMarkers();
+                    
+                    // Create new image element
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.alt = "Uploaded image";
+                    img.classList.add('map-track-image');
+                    
+                    // Clear image container and add new image
+                    imageContainer.innerHTML = '';
+                    imageContainer.appendChild(img);
+                    
+                    // Store reference to current image
+                    currentImage = img;
+                    
+                    // Set up event listeners for the new image
+                    setupImageListeners(img);
+                    
+                    // NEW: Initialize history
+                    initHistory();
+                    
+                    showOutput(`Image loaded: ${file.name} (${Math.round(file.size/1024)}KB)`, 'success');
+                };
+                
+                reader.onerror = () => {
+                    showOutput('Error reading file', 'error');
+                };
+                
+                reader.readAsDataURL(file);
+            });
+            
+            // Set up image event listeners
+            function setupImageListeners(img) {
+                // Add event listener for mouse movement on the image
+                img.addEventListener('mousemove', (e) => {
+                    // Get the position relative to the image
+                    const rect = img.getBoundingClientRect();
+                    const x = Math.floor(e.clientX - rect.left);
+                    const y = Math.floor(e.clientY - rect.top);
+                    
+                    // Update the coordinate displays
+                    xCoord.textContent = x;
+                    yCoord.textContent = y;
+                    
+                    // Also update the input fields
+                    xInput.value = x;
+                    yInput.value = y;
+                });
+                
+                // Reset coordinates when mouse leaves the image
+                img.addEventListener('mouseleave', () => {
+                    xCoord.textContent = '0';
+                    yCoord.textContent = '0';
+                });
+                
+                // Place marker on click
+                img.addEventListener('click', (e) => {
+                    const rect = img.getBoundingClientRect();
+                    const x = Math.floor(e.clientX - rect.left);
+                    const y = Math.floor(e.clientY - rect.top);
+                    
+                    placeMarker(x, y);
+                    
+                    // Generate command and add to output
+                    generateCommand('new_journey', x, y);
+                    
+                    // NEW: Save to history
+                    saveStateToHistory();
+                });
+            }
+            
+            // Place marker from input coordinates
+            placeMarkerBtn.addEventListener('click', () => {
+                const x = parseInt(xInput.value);
+                const y = parseInt(yInput.value);
+                
+                if (isNaN(x) || isNaN(y)) {
+                    showOutput('Please enter valid numbers for both coordinates', 'error');
+                    return;
+                }
+                
+                // Check if an image is loaded
+                if (!currentImage) {
+                    showOutput('Please upload an image first', 'error');
+                    return;
+                }
+                
+                // Check if coordinates are within the image
+                if (x < 0 || y < 0 || x > currentImage.width || y > currentImage.height) {
+                    showOutput('Coordinates are outside the image boundaries', 'error');
+                    return;
+                }
+                
+                placeMarker(x, y);
+                
+                // NEW: Save to history
+                saveStateToHistory();
+            });
+            
+            // Allow placing marker by pressing Enter in input fields
+            xInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') placeMarkerBtn.click();
+            });
+            
+            yInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') placeMarkerBtn.click();
+            });
+            
+            // Run commands from text area
+            runCommandsBtn.addEventListener('click', runCommands);
+            
+            // Clear all markers
+            clearMarkersBtn.addEventListener('click', clearMarkers);
+            
+            function clearMarkers() {
+                markers.forEach(marker => marker.remove());
+                markers = [];
+                showOutput('All markers cleared', 'success');
+                
+                // NEW: Save to history
+                saveStateToHistory();
+            }
+            
+            // Clear command output
+            clearOutputBtn.addEventListener('click', () => {
+                commandOutput.innerHTML = '<p>Command output cleared</p>';
+            });
+            
+            // Generate command template
+            generateTemplateBtn.addEventListener('click', () => {
+                commandInput.value = `# Command template
+# Format: {command_name x y}
+# Supported commands: new_journey, dot, cross, circle, target
+
+{new_journey 100 200}
+{dot 250 350}
+{cross 400 150}
+{circle 550 300}
+{target 700 250}`;
+                showOutput('Command template generated', 'info');
+            });
+            
+            // Function to place a marker
+            function placeMarker(x, y, type = currentMarkerType) {
+                if (!currentImage) return;
+                
+                const marker = document.createElement('div');
+                marker.className = `map-track-marker map-track-${type}`;
+                marker.style.left = `${x}px`;
+                marker.style.top = `${y}px`;
+                
+                // Add coordinate label
+                const label = document.createElement('div');
+                label.className = 'map-track-marker-label';
+                label.textContent = `(${x}, ${y})`;
+                marker.appendChild(label);
+                
+                imageContainer.appendChild(marker);
+                
+                // Store marker reference
+                markers.push({
+                    element: marker,
+                    type: type,
+                    x: x,
+                    y: y
+                });
+            }
+            
+            // Function to run commands
+            function runCommands() {
+                if (!currentImage) {
+                    showOutput('Please upload an image first', 'error');
+                    return;
+                }
+                
+                const commands = commandInput.value.split('\n');
+                let commandCount = 0;
+                
+                // Clear previous output
+                commandOutput.innerHTML = '';
+                
+                commands.forEach((command, index) => {
+                    // Skip empty lines and comments
+                    if (!command.trim() || command.trim().startsWith('#')) {
+                        return;
+                    }
+                    
+                    // Parse command: {command_name x y}
+                    const regex = /{(\w+)\s+(\d+)\s+(\d+)}/;
+                    const match = command.match(regex);
+                    
+                    if (match) {
+                        const cmd = match[1].toLowerCase();
+                        const x = parseInt(match[2]);
+                        const y = parseInt(match[3]);
+                        
+                        if (isNaN(x) || isNaN(y)) {
+                            showOutput(`Error on line ${index+1}: Invalid coordinates`, 'error');
+                            return;
+                        }
+                        
+                        // Determine marker type based on command
+                        let markerType;
+                        switch(cmd) {
+                            case 'dot':
+                            case 'new_journey':
+                                markerType = 'dot';
+                                break;
+                            case 'cross':
+                                markerType = 'cross';
+                                break;
+                            case 'circle':
+                                markerType = 'circle';
+                                break;
+                            case 'target':
+                                markerType = 'target';
+                                break;
+                            default:
+                                showOutput(`Error on line ${index+1}: Unknown command '${cmd}'`, 'error');
+                                return;
+                        }
+                        
+                        // Check if coordinates are within the image
+                        if (x < 0 || y < 0 || x > currentImage.width || y > currentImage.height) {
+                            showOutput(`Error on line ${index+1}: Coordinates outside image boundaries`, 'error');
+                            return;
+                        }
+                        
+                        // Place the marker
+                        placeMarker(x, y, markerType);
+                        showOutput(`Executed: {${cmd} ${x} ${y}}`, 'success');
+                        commandCount++;
+                    } else {
+                        showOutput(`Error on line ${index+1}: Invalid command format`, 'error');
+                    }
+                });
+                
+                // NEW: Save to history
+                saveStateToHistory();
+                
+                if (commandCount === 0) {
+                    showOutput('No valid commands found', 'info');
+                }
+            }
+            
+            // Function to generate command
+            function generateCommand(cmd, x, y) {
+                const commandLine = `{${cmd} ${x} ${y}}`;
+                showOutput(`Click generated command: ${commandLine}`, 'info');
+            }
+            
+            // Function to show output
+            function showOutput(message, type) {
+                const p = document.createElement('p');
+                p.textContent = message;
+                
+                switch(type) {
+                    case 'error':
+                        p.style.background = 'rgba(247, 37, 133, 0.2)';
+                        p.style.color = '#f72585';
+                        break;
+                    case 'success':
+                        p.style.background = 'rgba(76, 201, 240, 0.2)';
+                        p.style.color = '#4cc9f0';
+                        break;
+                    case 'info':
+                        p.style.background = 'rgba(67, 97, 238, 0.2)';
+                        p.style.color = '#b8c1ec';
+                        break;
+                }
+                
+                commandOutput.appendChild(p);
+                commandOutput.scrollTop = commandOutput.scrollHeight;
+            }
+            
+            // NEW: Render markers from state
+            function renderMarkers() {
+                // Clear existing markers from DOM
+                const existingMarkers = imageContainer.querySelectorAll('.map-track-marker');
+                existingMarkers.forEach(marker => marker.remove());
+                
+                // Clear markers array while keeping the data
+                const markerData = [...markers];
+                markers = [];
+                
+                // Recreate markers
+                markerData.forEach(data => {
+                    placeMarker(data.x, data.y, data.type);
+                });
+            }
+            
+            // NEW: Add event listeners for new buttons
+            undoBtn.addEventListener('click', undo);
+            redoBtn.addEventListener('click', redo);
+            saveBtn.addEventListener('click', saveProject);
+            cancelBtn.addEventListener('click', cancelProject);
+            downloadImageBtn.addEventListener('click', downloadImage);
+            downloadMarkersBtn.addEventListener('click', downloadMarkers);
+            
+            // NEW: Try to load saved project on startup
+            loadProject();
+        });
+    </script>
+</body>
+</html>

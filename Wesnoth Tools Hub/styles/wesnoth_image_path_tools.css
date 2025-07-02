@@ -778,3 +778,54 @@ body {
 	min-width: 0;
 	font-family: monospace;
 }
+
+#imag-tools-progress-container {
+    margin: 15px 0;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    border-radius: 4px;
+    color: var(--accent-color);
+}
+
+#imag-tools-progress-bar {
+    width: 100%;
+    height: 10px;
+    margin-top: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+}
+
+#imag-tools-progress-bar::-webkit-progress-bar {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+}
+
+#imag-tools-progress-bar::-webkit-progress-value {
+    background: var(--accent-color);
+    border-radius: 5px;
+}
+
+#imag-tools-progress-bar::-moz-progress-bar {
+    background: var(--accent-color);
+    border-radius: 5px;
+}
+/* directory display */
+.imag-tools-directories-container {
+    background-color: rgba(30, 45, 20, 0.5);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.imag-tools-directories-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.imag-tools-directory-item {
+    background: linear-gradient(135deg, #3a5a1f 0%, #2c3e21 100%);
+    padding: 8px 15px;
+    border-radius: 4px;
+    border: 1px solid #5a7c3f;
+}
