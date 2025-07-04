@@ -1,0 +1,2193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wesnoth Image Path Preview Tool</title>
+    <style>
+        :root {
+            --primary: #4a752c;
+            --primary-dark: #365822;
+            --secondary: #8c6239;
+            --light: #f0e6d2;
+            --dark: #1a1a1a;
+            --border: #7a5c3c;
+            --success: #5cb85c;
+            --info: #5bc0de;
+            --warning: #f0ad4e;
+            --danger: #d9534f;
+            --overlay-bg: rgba(0, 0, 0, 0.85);
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom right, #2c3e1d, #1a2a0f);
+            color: var(--light);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .imag-tools-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            grid-template-rows: auto 1fr;
+            gap: 20px;
+            grid-template-areas:
+                "imag-tools-header imag-tools-header imag-tools-header"
+                "imag-tools-sidebar imag-tools-main imag-tools-preview";
+            height: calc(100vh - 40px);
+        }
+        .imag-tools-header {
+            grid-area: imag-tools-header;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .imag-tools-header-content {
+            flex: 1;
+        }
+        .imag-tools-title {
+            color: #e9d7a1;
+            text-align: center;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        }
+        .imag-tools-subtitle {
+            text-align: center;
+            color: #c0b283;
+            font-size: 1.1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .imag-tools-header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .imag-tools-panel {
+            background: rgba(40, 30, 20, 0.85);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            overflow: auto;
+        }
+        .imag-tools-sidebar {
+            grid-area: imag-tools-sidebar;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .imag-tools-main {
+            grid-area: imag-tools-main;
+            display: flex;
+            flex-direction: column;
+        }
+        .imag-tools-preview-panel {
+            grid-area: imag-tools-preview;
+            display: flex;
+            flex-direction: column;
+        }
+        .imag-tools-section-title {
+            color: #e9d7a1;
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .imag-tools-upload-area {
+            border: 3px dashed var(--border);
+            border-radius: 8px;
+            padding: 25px;
+            text-align: center;
+            background: rgba(30, 20, 10, 0.5);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .imag-tools-upload-area:hover {
+            background: rgba(50, 40, 30, 0.7);
+            border-color: #a87c4f;
+        }
+        .imag-tools-upload-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            color: #c0b283;
+        }
+        .imag-tools-file-input {
+            display: none;
+        }
+        .imag-tools-btn {
+            background: linear-gradient(to bottom, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.2s;
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: 1px solid #5a8a2c;
+        }
+        .imag-tools-btn:hover {
+            background: linear-gradient(to bottom, #5a8a2c, #447020);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        .imag-tools-btn:active {
+            transform: translateY(0);
+        }
+        .imag-tools-btn-reset {
+            background: linear-gradient(to bottom, var(--warning), #e09d3d);
+            border-color: #d18e2e;
+        }
+        .imag-tools-btn-partial-reset {
+            background: linear-gradient(to bottom, #8c6239, #6d4b2c);
+            border-color: #7a5c3c;
+        }
+        .imag-tools-btn-save {
+            background: linear-gradient(to bottom, var(--success), #4cae4c);
+            border-color: #4cae4c;
+        }
+        .imag-tools-btn-copy {
+            background: linear-gradient(to bottom, var(--info), #46b8da);
+            border-color: #46b8da;
+        }
+        .imag-tools-btn-danger {
+            background: linear-gradient(to bottom, var(--danger), #c9302c);
+            border-color: #c9302c;
+        }
+        .imag-tools-btn-add {
+            background: linear-gradient(to bottom, #2c6a9e, #1a4a75);
+        }
+        .imag-tools-image-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 5px;
+        }
+        .imag-tools-image-item {
+            position: relative;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            overflow: hidden;
+            cursor: pointer;
+            aspect-ratio: 1/1;
+            transition: all 0.2s;
+        }
+        .imag-tools-image-actions {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            display: flex;
+            gap: 5px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .imag-tools-image-item:hover .imag-tools-image-actions {
+            opacity: 1;
+        }
+        .imag-tools-image-actions button {
+            background: rgba(0,0,0,0.7);
+            border: none;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .imag-tools-image-actions button:hover {
+            background: var(--primary);
+        }
+        /* Simplified lightbox styles */
+        .imag-tools-lightbox.simplified .imag-tools-lightbox-actions {
+            display: none;
+        }
+        .imag-tools-image-item:hover {
+            transform: scale(1.05);
+            border-color: #e9d7a1;
+        }
+        .imag-tools-image-item.selected {
+            border-color: #ffcc00;
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.7);
+        }
+        .imag-tools-image-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .imag-tools-function-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .imag-tools-control-group {
+            background: rgba(30, 25, 20, 0.7);
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #5a4a3a;
+        }
+        .imag-tools-function-select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            background: #2a231e;
+            color: var(--light);
+            border: 1px solid #5a4a3a;
+            font-size: 1rem;
+            margin-bottom: 12px;
+        }
+        .imag-tools-params {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .imag-tools-param-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .imag-tools-param-group.full-width {
+            grid-column: 1 / -1;
+        }
+        .imag-tools-param-group label {
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            color: #c0b283;
+        }
+        .imag-tools-param-group input[type="number"],
+        .imag-tools-param-group input[type="text"] {
+            padding: 8px 10px;
+            border-radius: 4px;
+            border: 1px solid #5a4a3a;
+            background: #1a1612;
+            color: var(--light);
+            font-size: 1rem;
+        }
+        .imag-tools-preview-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            background: rgba(20, 15, 10, 0.7);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            min-height: 300px;
+        }
+        .imag-tools-preview-image {
+            max-width: 100%;
+            max-height: 250px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+            background: #1a1612;
+        }
+        .imag-tools-code-output {
+            background: #1a1612;
+            border: 1px solid #5a4a3a;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: monospace;
+            color: #e9d7a1;
+            width: 100%;
+            min-height: 80px;
+            overflow: auto;
+            margin-top: 15px;
+            white-space: pre-wrap;
+        }
+        .imag-tools-preview-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .imag-tools-function-chain {
+            background: rgba(30, 25, 20, 0.7);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid #5a4a3a;
+            min-height: 100px;
+        }
+        .imag-tools-chain-display {
+            font-family: monospace;
+            color: #e9d7a1;
+            background: #1a1612;
+            padding: 12px;
+            border-radius: 6px;
+            min-height: 60px;
+            margin-top: 10px;
+            border: 1px solid #5a4a3a;
+            overflow: auto;
+        }
+        .imag-tools-action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .imag-tools-no-image {
+            color: #a87c4f;
+            text-align: center;
+            font-style: italic;
+            padding: 40px 20px;
+        }
+        .imag-tools-format-info {
+            text-align: center;
+            margin-top: 10px;
+            color: #a87c4f;
+        }
+        /* Lightbox Styles */
+        .imag-tools-lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--overlay-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
+        }
+        .imag-tools-lightbox.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .imag-tools-lightbox-content {
+            background: linear-gradient(to bottom, #3a2c1f, #2a1c0f);
+            border: 3px solid var(--border);
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            position: relative;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        .imag-tools-lightbox.active .imag-tools-lightbox-content {
+            transform: scale(1);
+        }
+        .imag-tools-lightbox-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 2px solid var(--border);
+        }
+        .imag-tools-lightbox-title {
+            color: #e9d7a1;
+            font-size: 1.5rem;
+            margin: 0;
+            max-width: 80%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .imag-tools-close-lightbox {
+            background: transparent;
+            border: none;
+            color: #c0b283;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0;
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .imag-tools-close-lightbox svg {
+            width: 1.5rem;
+            height: 1.5rem;
+            fill: currentColor;
+        }
+        .imag-tools-close-lightbox:hover {
+            color: #ffcc00;
+            transform: rotate(90deg);
+        }
+        .imag-tools-lightbox-body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        .imag-tools-lightbox-image {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
+            margin-bottom: 20px;
+            background: #1a1612;
+        }
+        /* New lightbox info panel */
+        .imag-tools-lightbox-info {
+            background: rgba(30, 25, 20, 0.7);
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid var(--border);
+            width: 100%;
+            max-width: 600px;
+            margin-top: 20px;
+        }
+        .imag-tools-lightbox-info-row {
+            display: flex;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(122, 92, 60, 0.3);
+        }
+        .imag-tools-lightbox-info-row:last-child {
+            border-bottom: none;
+        }
+        .imag-tools-lightbox-info-label {
+            font-weight: bold;
+            min-width: 120px;
+            color: #e9d7a1;
+        }
+        .imag-tools-lightbox-info-value {
+            flex: 1;
+            color: #c0b283;
+            word-break: break-all;
+        }
+        .imag-tools-lightbox-btn {
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid;
+        }
+        .imag-tools-lightbox-btn.select {
+            background: linear-gradient(to bottom, var(--primary), var(--primary-dark));
+            border-color: #5a8a2c;
+        }
+        .imag-tools-lightbox-btn.overlay {
+            background: linear-gradient(to bottom, #2c6a9e, #1a4a75);
+            border-color: #1a4a75;
+        }
+        .imag-tools-lightbox-btn.delete {
+            background: linear-gradient(to bottom, var(--danger), #c9302c);
+            border-color: #c9302c;
+        }
+        .imag-tools-lightbox-btn.close {
+            background: linear-gradient(to bottom, #8c6239, #6d4b2c);
+            border-color: #7a5c3c;
+        }
+        .imag-tools-lightbox-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        .imag-tools-lightbox-btn:active {
+            transform: translateY(0);
+        }
+        .imag-tools-lightbox-actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px 20px;
+            border-top: 2px solid var(--border);
+        }
+        .imag-tools-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+        .imag-tools-modal-content {
+            background: linear-gradient(to bottom, #3a2c1f, #2a1c0f);
+            border: 3px solid var(--border);
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            position: relative;
+        }
+        .imag-tools-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 15px;
+        }
+        .imag-tools-modal-title {
+            color: #e9d7a1;
+            font-size: 1.8rem;
+            margin: 0;
+        }
+        .imag-tools-close-modal {
+            background: transparent;
+            border: none;
+            color: #c0b283;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0;
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .imag-tools-close-modal svg {
+            width: 1.5rem;
+            height: 1.5rem;
+            fill: currentColor;
+        }
+        .imag-tools-close-modal:hover {
+            color: #ffcc00;
+            transform: rotate(90deg);
+        }
+        .imag-tools-saved-paths-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .imag-tools-saved-path {
+            background: rgba(50, 40, 30, 0.7);
+            border: 1px solid #5a4a3a;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: monospace;
+            color: #e9d7a1;
+            word-break: break-all;
+            position: relative;
+        }
+        .imag-tools-saved-path-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            justify-content: flex-end;
+        }
+        .imag-tools-saved-path-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #ffcc00;
+        }
+        .imag-tools-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            background: rgba(40, 30, 20, 0.95);
+            border: 2px solid var(--border);
+            color: #e9d7a1;
+            font-weight: bold;
+            z-index: 2000;
+            transform: translateX(200%);
+            transition: transform 0.3s ease-in-out;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .imag-tools-toast.show {
+            transform: translateX(0);
+        }
+        .imag-tools-toast svg {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+        .imag-tools-toast.toast-success svg {
+            fill: var(--success);
+        }
+        .imag-tools-toast.toast-error svg {
+            fill: var(--danger);
+        }
+        .svg-icon {
+            width: 1em;
+            height: 1em;
+            vertical-align: -0.125em;
+            fill: currentColor;
+        }
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(30, 25, 20, 0.5);
+            border-radius: 5px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--secondary);
+            border-radius: 5px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a87c4f;
+        }
+        @media (max-width: 1100px) {
+            .imag-tools-container {
+                grid-template-columns: 1fr;
+                grid-template-areas:
+                    "imag-tools-header"
+                    "imag-tools-sidebar"
+                    "imag-tools-main"
+                    "imag-tools-preview";
+                height: auto;
+            }
+            .imag-tools-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .imag-tools-header-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+            .imag-tools-btn {
+                padding: 14px 16px;
+                font-size: 1.1rem;
+            }
+            .imag-tools-preview-actions,
+            .imag-tools-action-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 768px) {
+            .imag-tools-params {
+                grid-template-columns: 1fr;
+            }
+            .imag-tools-lightbox-content {
+                max-width: 95%;
+            }
+            .imag-tools-lightbox-actions {
+                flex-direction: column;
+            }
+            .imag-tools-lightbox-body {
+                padding: 15px;
+            }
+            .imag-tools-lightbox-image {
+                max-height: 300px;
+            }
+        }
+        .imag-tools-preview-loading {
+            position: relative;
+        }
+        .imag-tools-preview-loading::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" stroke="%23e9d7a1" stroke-width="8" fill="none" stroke-dasharray="62.8 188.8"><animateTransform attributeName="transform" type="rotate" repeatCount="indefinite" dur="1s" values="0 50 50;360 50 50"/></circle></svg>') center/50px no-repeat;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="imag-tools-container">
+        <header class="imag-tools-header">
+            <div class="imag-tools-header-content">
+                <h1 class="imag-tools-title">Wesnoth Image Path Preview Tool</h1>
+                <p class="imag-tools-subtitle">Upload images, apply path functions, and see immediate previews without reloading the game</p>
+            </div>
+            <div class="imag-tools-header-buttons">
+                <button class="imag-tools-btn imag-tools-btn-reset" id="resetAllBtn">
+                    <svg class="svg-icon" viewBox="0 0 448 512" aria-hidden="true">
+                        <path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"/>
+                    </svg>
+                    Reset All
+                </button>
+            </div>
+        </header>
+        <aside class="imag-tools-sidebar imag-tools-panel">
+            <div class="imag-tools-upload-section">
+                <h2 class="imag-tools-section-title">Upload Images</h2>
+                <div class="imag-tools-upload-area" id="dropZone">
+                    <div class="imag-tools-upload-icon">📁</div>
+                    <p class="imag-tools-upload-text">Drag & drop images here</p>
+                    <p class="imag-tools-upload-text">or</p>
+                    <button class="imag-tools-btn" id="browseBtn">
+                        <svg class="svg-icon" viewBox="0 0 576 512" aria-hidden="true">
+                            <path d="M147.8 192H480V144C480 117.5 458.5 96 432 96h-160l-64-64h-160C21.49 32 0 53.49 0 80v328.4l90.54-181.1C101.4 205.6 123.4 192 147.8 192zM543.1 224H147.8C135.7 224 124.6 230.8 119.2 241.7L0 480h447.1c12.12 0 23.2-6.852 28.62-17.69l96-192C583.2 249 567.7 224 543.1 224z"/>
+                        </svg>
+                        Browse Files
+                    </button>
+                    <input type="file" id="fileInput" class="imag-tools-file-input" accept="image/*" multiple>
+                </div>
+                <p class="imag-tools-format-info">Supports PNG, JPG, GIF</p>
+            </div>
+            <div class="imag-tools-image-library">
+                <h2 class="imag-tools-section-title">Image Library</h2>
+                <div class="imag-tools-image-list" id="imageList">
+                    <div class="imag-tools-no-image">No images uploaded</div>
+                </div>
+            </div>
+        </aside>
+        <main class="imag-tools-main imag-tools-panel">
+            <h2 class="imag-tools-section-title">Function Builder</h2>
+            <div class="imag-tools-function-controls">
+                <div class="imag-tools-control-group">
+                    <select class="imag-tools-function-select" id="functionSelect">
+                        <option value="">-- Select a function --</option>
+                        <option value="ADJUST_ALPHA">~ADJUST_ALPHA(alpha)</option>
+                        <option value="BL">~BL()</option>
+                        <option value="BRIGHTEN">~BRIGHTEN(amount)</option>
+                        <option value="CONTRAST">~CONTRAST(factor)</option>
+                        <option value="CROP">~CROP(x,y,width,height)</option>
+                        <option value="CS">~CS(r,g,b)</option>
+                        <option value="FL">~FL(horizontal,vertical)</option>
+                        <option value="GS">~GS()</option>
+                        <option value="NEG">~NEG()</option>
+                        <option value="O">~O(opacity)</option>
+                        <option value="R">~R(degrees)</option>
+                        <option value="RC">~RC(r,g,b)</option>
+                        <option value="SCALE">~SCALE(width,height)</option>
+                        <option value="BLIT">~BLIT(overlay,x,y)</option>
+                    </select>
+                    <div class="imag-tools-params" id="paramsContainer">
+                        <!-- Parameters will be added here based on function selection -->
+                    </div>
+                    <button class="imag-tools-btn imag-tools-btn-add" id="addChainBtn">
+                        <svg class="svg-icon" viewBox="0 0 448 512" aria-hidden="true">
+                            <path d="M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32V224H48c-17.7 0-32 14.3-32 32s14.3 32 32 32H192V432c0 17.7 14.3 32 32 32s32-14.3 32-32V288H400c17.7 0 32-14.3 32-32s-14.3-32-32-32H256V80z"/>
+                        </svg>
+                        Add to Chain
+                    </button>
+                </div>
+                <div class="imag-tools-function-chain">
+                    <h2 class="imag-tools-section-title">Function Chain</h2>
+                    <div class="imag-tools-chain-display" id="chainDisplay">
+                        No functions added
+                    </div>
+                    <div class="imag-tools-action-buttons">
+                        <button class="imag-tools-btn imag-tools-btn-partial-reset" id="partialResetBtn">
+                            <svg class="svg-icon" viewBox="0 0 512 512" aria-hidden="true">
+                                <path d="M463.5 224H472c13.3 0 24-10.7 24-24V72c0-9.7-5.8-18.5-14.8-22.2s-19.3-1.7-26.2 5.2L413.4 96.6c-87.6-86.5-228.7-86.2-315.8 1c-87.5 87.5-87.5 229.3 0 316.8s229.3 87.5 316.8 0c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0c-62.5 62.5-163.8 62.5-226.3 0s-62.5-163.8 0-226.3c62.2-62.2 162.7-62.5 225.3-1L327 183c-6.9 6.9-8.9 17.2-5.2 26.2s12.5 14.8 22.2 14.8H463.5z"/>
+                            </svg>
+                            Reset Chain
+                        </button>
+                        <button class="imag-tools-btn imag-tools-btn-apply" id="applyBtn">
+                            <svg class="svg-icon" viewBox="0 0 384 512" aria-hidden="true">
+                                <path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 58.6 0 80V432c0 21.4 11.7 40.9 30.5 51s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/>
+                            </svg>
+                            Apply to Selected
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <aside class="imag-tools-preview-panel imag-tools-panel">
+            <h2 class="imag-tools-section-title">
+                Preview
+                <button class="imag-tools-btn imag-tools-btn-save" id="savePathBtn">
+                    <svg class="svg-icon" viewBox="0 0 448 512" aria-hidden="true">
+                        <path d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V173.3c0-17-6.7-33.3-18.7-45.3L352 50.7C340 38.7 323.7 32 306.7 32H64zm0 96c0-17.7 14.3-32 32-32H288c17.7 0 32 14.3 32 32v64c0 17.7-14.3 32-32 32H96c-17.7 0-32-14.3-32-32V128zM224 288a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/>
+                    </svg>
+                    Save Path
+                </button>
+            </h2>
+            <div class="imag-tools-preview-container">
+                <div class="imag-tools-no-image">Select an image and apply functions to see preview</div>
+                <img class="imag-tools-preview-image" id="previewImage" style="display: none;">
+                <div class="imag-tools-code-output" id="codeOutput">
+                    // Generated code will appear here
+                </div>
+                <div class="imag-tools-preview-actions">
+                    <button class="imag-tools-btn imag-tools-btn-copy" id="copyPathBtn">
+                        <svg class="svg-icon" viewBox="0 0 448 512" aria-hidden="true">
+                            <path d="M208 0H332.1c12.7 0 24.9 5.1 33.9 14.1l67.9 67.9c9 9 14.1 21.2 14.1 33.9V336c0 26.5-21.5 48-48 48H208c-26.5 0-48-21.5-48-48V48c0-26.5 21.5-48 48-48zM48 128h80v64H64V448H256V416h64v48c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V176c0-26.5 21.5-48 48-48z"/>
+                        </svg>
+                        Copy Path
+                    </button>
+                    <button class="imag-tools-btn imag-tools-btn-danger" id="resetPreviewBtn">
+                        <svg class="svg-icon" viewBox="0 0 384 512" aria-hidden="true">
+                            <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/>
+                        </svg>
+                        Reset Preview
+                    </button>
+                </div>
+            </div>
+        </aside>
+    </div>
+    <!-- Image Lightbox -->
+    <div class="imag-tools-lightbox" id="imageLightbox">
+        <div class="imag-tools-lightbox-content">
+            <div class="imag-tools-lightbox-header">
+                <h3 class="imag-tools-lightbox-title">Image Preview</h3>
+                <button class="imag-tools-close-lightbox" id="closeLightboxBtn">
+                    <svg viewBox="0 0 384 512">
+                        <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="imag-tools-lightbox-body">
+                <img id="lightboxImage" class="imag-tools-lightbox-image" alt="Selected image preview">
+                <div class="imag-tools-lightbox-info">
+                    <div class="imag-tools-lightbox-info-row">
+                        <div class="imag-tools-lightbox-info-label">Name:</div>
+                        <div class="imag-tools-lightbox-info-value" id="lightboxImageName">-</div>
+                    </div>
+                    <div class="imag-tools-lightbox-info-row">
+                        <div class="imag-tools-lightbox-info-label">Dimensions:</div>
+                        <div class="imag-tools-lightbox-info-value" id="lightboxDimensions">-</div>
+                    </div>
+                    <div class="imag-tools-lightbox-info-row">
+                        <div class="imag-tools-lightbox-info-label">File Size:</div>
+                        <div class="imag-tools-lightbox-info-value" id="lightboxSize">-</div>
+                    </div>
+                    <div class="imag-tools-lightbox-info-row">
+                        <div class="imag-tools-lightbox-info-label">Format:</div>
+                        <div class="imag-tools-lightbox-info-value" id="lightboxFormat">-</div>
+                    </div>
+                </div>
+            </div>
+            <div class="imag-tools-lightbox-actions">
+                <button class="imag-tools-lightbox-btn imag-tools-lightbox-btn.select" id="lightboxSelectBtn">
+                    <svg class="svg-icon" viewBox="0 0 384 512" width="16" height="16">
+                        <path d="M0 192H176V0H160C71.6 0 0 71.6 0 160v32zm0 32V352c0 88.4 71.6 160 160 160h64c88.4 0 160-71.6 160-160V224H192 0zM384 32V192H224V0h32c88.4 0 160 71.6 160 160v32c0 88.4-71.6 160-160 160h-32V224H384V32z"/>
+                    </svg>
+                    Select
+                </button>
+                <button class="imag-tools-lightbox-btn imag-tools-lightbox-btn.delete" id="lightboxDeleteBtn">
+                    <svg class="svg-icon" viewBox="0 0 448 512" width="16" height="16">
+                        <path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"/>
+                    </svg>
+                    Delete
+                </button>
+                <button class="imag-tools-lightbox-btn imag-tools-lightbox-btn.close" id="lightboxCloseBtn">
+                    <svg class="svg-icon" viewBox="0 0 384 512" width="16" height="16">
+                        <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/>
+                    </svg>
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Saved Paths Modal -->
+    <div class="imag-tools-modal" id="savedPathsModal">
+        <div class="imag-tools-modal-content">
+            <div class="imag-tools-modal-header">
+                <h3 class="imag-tools-modal-title">Saved Paths</h3>
+                <button class="imag-tools-close-modal" id="closeModalBtn">
+                    <svg viewBox="0 0 384 512">
+                        <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="imag-tools-saved-paths-list" id="savedPathsList">
+                <div class="imag-tools-no-saved">No saved paths yet</div>
+            </div>
+        </div>
+    </div>
+    <!-- Toast Notification -->
+    <div class="imag-tools-toast" id="toast">
+        <span id="toastIcon"></span>
+        <span id="toastMessage">Operation completed successfully!</span>
+    </div>
+    <script>
+        // Global state
+        const state = {
+            images: [],
+            selectedImage: null,
+            functionChain: [],
+            savedPaths: [],
+            currentLightboxImage: null,
+            lastDirectory: null
+        };
+        // Toast icons
+        const toastIcons = {
+            success: `<svg viewBox="0 0 512 512"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209L241 337c-9.4 9.4-24.6 9.4-33.9 0l-64-64c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l47 47L335 175c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z"/></svg>`,
+            error: `<svg viewBox="0 0 512 512"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-384c13.3 0 24 10.7 24 24V264c0 13.3-10.7 24-24 24s-24-10.7-24-24V152c0-13.3 10.7-24 24-24zM224 352a32 32 0 1 1 64 0 32 32 0 1 1 -64 0z"/></svg>`
+        };
+        // DOM Elements
+        const elements = {
+            fileInput: document.getElementById('fileInput'),
+            dropZone: document.getElementById('dropZone'),
+            browseBtn: document.getElementById('browseBtn'),
+            imageList: document.getElementById('imageList'),
+            functionSelect: document.getElementById('functionSelect'),
+            paramsContainer: document.getElementById('paramsContainer'),
+            chainDisplay: document.getElementById('chainDisplay'),
+            resetBtn: document.getElementById('partialResetBtn'),
+            applyBtn: document.getElementById('applyBtn'),
+            previewImage: document.getElementById('previewImage'),
+            codeOutput: document.getElementById('codeOutput'),
+            copyPathBtn: document.getElementById('copyPathBtn'),
+            savePathBtn: document.getElementById('savePathBtn'),
+            resetAllBtn: document.getElementById('resetAllBtn'),
+            resetPreviewBtn: document.getElementById('resetPreviewBtn'),
+            savedPathsModal: document.getElementById('savedPathsModal'),
+            closeModalBtn: document.getElementById('closeModalBtn'),
+            savedPathsList: document.getElementById('savedPathsList'),
+            toast: document.getElementById('toast'),
+            toastMessage: document.getElementById('toastMessage'),
+            toastIcon: document.getElementById('toastIcon'),
+            addChainBtn: document.getElementById('addChainBtn'),
+            imageLightbox: document.getElementById('imageLightbox'),
+            lightboxImage: document.getElementById('lightboxImage'),
+            lightboxImageName: document.getElementById('lightboxImageName'),
+            lightboxDimensions: document.getElementById('lightboxDimensions'),
+            lightboxSize: document.getElementById('lightboxSize'),
+            lightboxFormat: document.getElementById('lightboxFormat'),
+            closeLightboxBtn: document.getElementById('closeLightboxBtn'),
+            previewContainer: document.querySelector('.imag-tools-preview-container'),
+            lightboxSelectBtn: document.getElementById('lightboxSelectBtn'),
+            lightboxDeleteBtn: document.getElementById('lightboxDeleteBtn'),
+            lightboxCloseBtn: document.getElementById('lightboxCloseBtn')
+        };
+        
+        // Helper function to format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // Helper function to get file extension
+        function getFileExtension(filename) {
+            return filename.split('.').pop().toUpperCase();
+        }
+        
+        // Helper function to create canvas from image
+        function createCanvasFromImage(img) {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            return canvas;
+        }
+        
+        // Helper to load image asynchronously
+        function loadImage(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = url;
+            });
+        }
+        
+        // Image processing functions
+        const imageProcessors = {
+            ADJUST_ALPHA: (canvas, params) => {
+                const { alpha } = params;
+                const newCanvas = document.createElement('canvas');
+                newCanvas.width = canvas.width;
+                newCanvas.height = canvas.height;
+                const ctx = newCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, 0);
+                const imageData = ctx.getImageData(0, 0, newCanvas.width, newCanvas.height);
+                const data = imageData.data;
+                
+                for (let i = 0; i < data.length; i += 4) {
+                    // Adjust alpha value
+                    data[i + 3] = Math.min(255, Math.max(0, alpha));
+                }
+                
+                ctx.putImageData(imageData, 0, 0);
+                return newCanvas;
+            },
+            
+            BL: (canvas) => {
+                const newCanvas = document.createElement('canvas');
+                newCanvas.width = canvas.width;
+                newCanvas.height = canvas.height;
+                const ctx = newCanvas.getContext('2d');
+                
+                // Create black outline effect
+                ctx.fillStyle = 'black';
+                ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.drawImage(canvas, 0, 0);
+                ctx.globalCompositeOperation = 'source-over';
+                
+                return newCanvas;
+            },
+            
+            BRIGHTEN: (canvas, params) => {
+                const { amount } = params;
+                const newCanvas = document.createElement('canvas');
+                newCanvas.width = canvas.width;
+                newCanvas.height = canvas.height;
+                const ctx = newCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, 0);
+                const imageData = ctx.getImageData(0, 0, newCanvas.width, newCanvas.height);
+                const data = imageData.data;
+                
+                for (let i = 0; i < data.length; i += 4) {
+                    data[i] = Math.min(255, Math.max(0, data[i] + amount));
+                    data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + amount));
+                    data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + amount));
+                }
+                
+                ctx.putImageData(imageData, 0, 0);
+                return newCanvas;
+            },
+            
+            CONTRAST: (canvas, params) => {
+                const { factor } = params;
+                const newCanvas = document.createElement('canvas');
+                newCanvas.width = canvas.width;
+                newCanvas.height = canvas.height;
+                const ctx = newCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, 0);
+                const imageData = ctx.getImageData(0, 0, newCanvas.width, newCanvas.height);
+                const data = imageData.data;
+                
+                for (let i = 0; i < data.length; i += 4) {
+                    // Apply contrast
+                    data[i] = Math.min(255, Math.max(0, 128 + factor * (data[i] - 128)));
+                    data[i + 1] = Math.min(255, Math.max(0, 128 + factor * (data[i + 1] - 128)));
+                    data[i + 2] = Math.min(255, Math.max(0, 128 + factor * (data[i + 2] - 128)));
+                }
+                
+                ctx.putImageData(imageData, 0, 0);
+                return newCanvas;
+            },
+            
+            CROP: (canvas, params) => {
+                const {x, y, width, height} = params;
+                const newCanvas = document.createElement('canvas');
+                newCanvas.width = width;
+                newCanvas.height = height;
+                const ctx = newCanvas.getContext('2d');
+                ctx.drawImage(canvas, x, y, width, height, 0, 0, width, height);
+                return newCanvas;
+            },
+            
+            CS: (canvas, params) => {
+                const { r, g, b } = params;
+                const newCanvas = document.createElement('canvas');
+                newCanvas.width = canvas.width;
+                newCanvas.height = canvas.height;
+                const ctx = newCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, 0);
+                const imageData = ctx.getImageData(0, 0, newCanvas.width, newCanvas.height);
+                const data = imageData.data;
+                
+                // Apply color shift
+                for (let i = 0; i < data.length; i += 4) {
+                    data[i] = Math.min(255, data[i] * (r / 255));     // R
+                    data[i + 1] = Math.min(255, data[i + 1] * (g / 255)); // G
+                    data[i + 2] = Math.min(255, data[i + 2] * (b / 255)); // B
+                }
+                
+                ctx.putImageData(imageData, 0, 0);
+                return newCanvas;
+            },
+            
+            FL: (canvas, params) => {
+                const { horizontal, vertical } = params;
+                const newCanvas = document.createElement('canvas');
+                newCanvas.width = canvas.width;
+                newCanvas.height = canvas.height;
+                const ctx = newCanvas.getContext('2d');
+                
+                // Apply flip
+                ctx.translate(
+                    horizontal ? canvas.width : 0,
+                    vertical ? canvas.height : 0
+                );
+                ctx.scale(
+                    horizontal ? -1 : 1,
+                    vertical ? -1 : 1
+                );
+                
+                ctx.drawImage(canvas, 0, 0);
+                return newCanvas;
+            },
+            
+            GS: (canvas) => {
+                const newCanvas = document.createElement('canvas');
+                newCanvas.width = canvas.width;
+                newCanvas.height = canvas.height;
+                const ctx = newCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, 0);
+                const imageData = ctx.getImageData(0, 0, newCanvas.width, newCanvas.height);
+                const data = imageData.data;
+                
+                for (let i = 0; i < data.length; i += 4) {
+                    // Convert to grayscale
+                    const avg = 0.3 * data[i] + 0.59 * data[i + 1] + 0.11 * data[i + 2];
+                    data[i] = avg;
+                    data[i + 1] = avg;
+                    data[i + 2] = avg;
+                }
+                
+                ctx.putImageData(imageData, 0, 0);
+                return newCanvas;
+            },
+            
+            NEG: (canvas) => {
+                const newCanvas = document.createElement('canvas');
+                newCanvas.width = canvas.width;
+                newCanvas.height = canvas.height;
+                const ctx = newCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, 0);
+                const imageData = ctx.getImageData(0, 0, newCanvas.width, newCanvas.height);
+                const data = imageData.data;
+                
+                for (let i = 0; i < data.length; i += 4) {
+                    // Invert colors
+                    data[i] = 255 - data[i];
+                    data[i + 1] = 255 - data[i + 1];
+                    data[i + 2] = 255 - data[i + 2];
+                }
+                
+                ctx.putImageData(imageData, 0, 0);
+                return newCanvas;
+            },
+            
+            O: (canvas, params) => {
+                const { opacity } = params;
+                const newCanvas = document.createElement('canvas');
+                newCanvas.width = canvas.width;
+                newCanvas.height = canvas.height;
+                const ctx = newCanvas.getContext('2d');
+                ctx.globalAlpha = opacity;
+                ctx.drawImage(canvas, 0, 0);
+                return newCanvas;
+            },
+            
+            R: (canvas, params) => {
+                const degrees = params.degrees % 360;
+                const radians = degrees * Math.PI / 180;
+                // Calculate new canvas size
+                const sin = Math.abs(Math.sin(radians));
+                const cos = Math.abs(Math.cos(radians));
+                const newWidth = Math.floor(canvas.width * cos + canvas.height * sin);
+                const newHeight = Math.floor(canvas.width * sin + canvas.height * cos);
+                const newCanvas = document.createElement('canvas');
+                newCanvas.width = newWidth;
+                newCanvas.height = newHeight;
+                const ctx = newCanvas.getContext('2d');
+                // Move to center, rotate, then draw
+                ctx.translate(newWidth / 2, newHeight / 2);
+                ctx.rotate(radians);
+                ctx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+                return newCanvas;
+            },
+            
+            RC: (canvas, params) => {
+                const { r, g, b } = params;
+                const newCanvas = document.createElement('canvas');
+                newCanvas.width = canvas.width;
+                newCanvas.height = canvas.height;
+                const ctx = newCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, 0);
+                const imageData = ctx.getImageData(0, 0, newCanvas.width, newCanvas.height);
+                const data = imageData.data;
+                
+                for (let i = 0; i < data.length; i += 4) {
+                    // Only recolor non-transparent pixels
+                    if (data[i + 3] > 0) {
+                        data[i] = r;
+                        data[i + 1] = g;
+                        data[i + 2] = b;
+                    }
+                }
+                
+                ctx.putImageData(imageData, 0, 0);
+                return newCanvas;
+            },
+            
+            SCALE: (canvas, params) => {
+                const {width, height} = params;
+                const newCanvas = document.createElement('canvas');
+                newCanvas.width = width;
+                newCanvas.height = height;
+                const ctx = newCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, 0, width, height);
+                return newCanvas;
+            },
+            
+            // Updated BLIT processor (parameter order change)
+            BLIT: async (canvas, params) => {
+                try {
+                    const overlayImg = await loadImage(params.url);
+                    const newCanvas = document.createElement('canvas');
+                    newCanvas.width = canvas.width;
+                    newCanvas.height = canvas.height;
+                    const ctx = newCanvas.getContext('2d');
+                    
+                    // Draw base image
+                    ctx.drawImage(canvas, 0, 0);
+                    // Draw overlay at specified position
+                    ctx.drawImage(overlayImg, params.x, params.y);
+                    
+                    return newCanvas;
+                } catch (error) {
+                    console.error('Error loading blit image:', error);
+                    return canvas;
+                }
+            }
+        };
+        
+        // Initialize the application
+        function init() {
+            setDefaultDirectory(); 
+            // Load saved paths
+            loadSavedPaths();
+            // Setup event listeners
+            setupEventListeners();
+            // Initialize function parameters
+            updateFunctionParams();
+        }
+        
+        // Setup all event listeners
+        function setupEventListeners() {
+            // File input handling
+            elements.browseBtn.addEventListener('click', async () => {
+                try {
+                    // Try using modern directory picker API first
+                    if ('showDirectoryPicker' in window) {
+                        const handle = await window.showDirectoryPicker({
+                            startIn: 'documents'
+                        });
+                        
+                        // Get files from directory
+                        const files = [];
+                        for await (const entry of handle.values()) {
+                            if (entry.kind === 'file' && entry.name.match(/\.(png|jpe?g|gif)$/i)) {
+                                const file = await entry.getFile();
+                                files.push(file);
+                            }
+                        }
+                        
+                        handleFiles(files);
+                    } 
+                    // Fallback for browsers without directory picker API
+                    else {
+                        const newFileInput = document.createElement('input');
+                        newFileInput.type = 'file';
+                        newFileInput.accept = 'image/*';
+                        newFileInput.multiple = true;
+                        newFileInput.style.display = 'none';
+                        
+                        newFileInput.addEventListener('change', (e) => {
+                            handleFiles(e.target.files);
+                            document.body.removeChild(newFileInput);
+                        });
+                        
+                        document.body.appendChild(newFileInput);
+                        newFileInput.click();
+                    }
+                } catch (error) {
+                    console.error('Directory access error:', error);
+                }
+            });
+            
+            elements.fileInput.addEventListener('change', handleFileSelect);
+            
+            // Drag and drop
+            elements.dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                elements.dropZone.style.backgroundColor = 'rgba(70, 60, 50, 0.7)';
+            });
+            
+            elements.dropZone.addEventListener('dragleave', () => {
+                elements.dropZone.style.backgroundColor = '';
+            });
+            
+            elements.dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                elements.dropZone.style.backgroundColor = '';
+                if (e.dataTransfer.files.length) {
+                    handleFiles(e.dataTransfer.files);
+                }
+            });
+            
+            // Function selection
+            elements.functionSelect.addEventListener('change', updateFunctionParams);
+            
+            // Add to Chain button
+            elements.addChainBtn.addEventListener('click', addFunctionToChain);
+            
+            // Buttons
+            elements.resetBtn.addEventListener('click', resetFunctionChain);
+            elements.applyBtn.addEventListener('click', applyFunctions);
+            elements.copyPathBtn.addEventListener('click', copyPathToClipboard);
+            elements.savePathBtn.addEventListener('click', savePath);
+            elements.resetAllBtn.addEventListener('click', resetAll);
+            elements.resetPreviewBtn.addEventListener('click', resetPreview);
+            elements.closeModalBtn.addEventListener('click', closeModal);
+            
+            // Modal open from save button
+            elements.savePathBtn.addEventListener('click', () => {
+                elements.savedPathsModal.style.display = 'flex';
+            });
+            
+            // Lightbox buttons
+            elements.closeLightboxBtn.addEventListener('click', closeLightbox);
+            elements.lightboxCloseBtn.addEventListener('click', closeLightbox);
+            elements.lightboxSelectBtn.addEventListener('click', selectLightboxImage);
+            elements.lightboxDeleteBtn.addEventListener('click', deleteLightboxImage);
+        }
+        
+        // Handle file selection
+        function handleFileSelect(e) {
+            handleFiles(e.target.files);
+        }
+        
+        // set default directory
+        function setDefaultDirectory() {
+            // Try to set to "Documents/My Games" if it exists
+            const defaultPath = '/Documents/My Games';
+            if (!state.lastDirectory && defaultPath) {
+                state.lastDirectory = defaultPath;
+            }
+        }
+        
+        // Process uploaded files
+        function handleFiles(files) {
+            if (files.length > 0 && files[0].path) {
+                const pathParts = files[0].path.split('/');
+                pathParts.pop(); // Remove filename
+                state.lastDirectory = pathParts.join('/');
+            }
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (!file.type.match('image.*')) continue;
+                
+                const reader = new FileReader();
+                reader.onload = (function(file) {
+                    return function(e) {
+                        addImageToLibrary(file.name, e.target.result, file.size, file.type);
+                    };
+                })(file);
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        // Add image to library
+        function addImageToLibrary(name, url, size, type) {
+            // Remove "no images" message if present
+            if (elements.imageList.querySelector('.imag-tools-no-image')) {
+                elements.imageList.innerHTML = '';
+            }
+            
+            const imageItem = document.createElement('div');
+            imageItem.className = 'imag-tools-image-item';
+            imageItem.dataset.name = name;
+            imageItem.dataset.url = url;
+            imageItem.dataset.size = size;
+            imageItem.dataset.type = type;
+            
+            // Create image
+            const img = document.createElement('img');
+            img.src = url;
+            img.alt = name;
+
+            // Create actions container
+            const actions = document.createElement('div');
+            actions.className = 'imag-tools-image-actions';
+
+            // Select button
+            const selectBtn = document.createElement('button');
+            selectBtn.className = 'imag-tools-select-btn';
+            selectBtn.innerHTML = '★';
+            selectBtn.title = 'Select/Unselect';
+            selectBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleSelection(name, url);
+            });
+
+            // Delete button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'imag-tools-delete-btn';
+            deleteBtn.innerHTML = '🗑️';
+            deleteBtn.title = 'Delete';
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteImage(name, url);
+            });
+
+            actions.appendChild(selectBtn);
+            actions.appendChild(deleteBtn);
+
+            imageItem.appendChild(img);
+            imageItem.appendChild(actions);
+
+            // Double click for lightbox
+            imageItem.addEventListener('click', () => {
+                openLightbox(name, url, size, type);
+            });
+
+            elements.imageList.appendChild(imageItem);
+            
+            // Add to state
+            state.images.push({ name, url, size, type });
+        }
+        
+        // Toggle selection
+        function toggleSelection(name, url) {
+            if (state.selectedImage && state.selectedImage.url === url) {
+                // Unselect if already selected
+                state.selectedImage = null;
+                document.querySelectorAll('.imag-tools-image-item').forEach(item => {
+                    if (item.dataset.url === url) {
+                        item.classList.remove('selected');
+                    }
+                });
+                showToast('Image unselected', 'success');
+            } else {
+                // Select new image
+                state.selectedImage = { name, url };
+                document.querySelectorAll('.imag-tools-image-item').forEach(item => {
+                    item.classList.remove('selected');
+                    if (item.dataset.url === url) {
+                        item.classList.add('selected');
+                    }
+                });
+                showToast('Image selected', 'success');
+                // Auto-update preview
+                updatePreview();
+            }
+        }
+        
+        // Open lightbox with image
+        function openLightbox(name, url, size, type) {
+            // Set image
+            elements.lightboxImage.src = url;
+            
+            // Set metadata
+            elements.lightboxImageName.textContent = name;
+            elements.lightboxSize.textContent = size ? formatFileSize(size) : 'Unknown';
+            elements.lightboxFormat.textContent = type ? type.split('/')[1].toUpperCase() : getFileExtension(name);
+            
+            // Show loading indicator for dimensions
+            elements.lightboxDimensions.textContent = 'Calculating...';
+            
+            // Set dimensions once image is loaded
+            elements.lightboxImage.onload = function() {
+                elements.lightboxDimensions.textContent = `${this.naturalWidth} × ${this.naturalHeight} px`;
+            };
+            
+            // Open the lightbox
+            elements.imageLightbox.classList.add('active');
+            
+            // Store current lightbox image
+            state.currentLightboxImage = { name, url, size, type };
+        }
+        
+        // Close lightbox
+        function closeLightbox() {
+            elements.imageLightbox.classList.remove('active');
+        }
+        
+        // Select image from lightbox
+        function selectLightboxImage() {
+            if (!state.currentLightboxImage) return;
+            const { name, url } = state.currentLightboxImage;
+            toggleSelection(name, url);
+            closeLightbox();
+        }
+        
+        // Delete image from lightbox
+        function deleteLightboxImage() {
+            if (!state.currentLightboxImage) return;
+            const { name, url } = state.currentLightboxImage;
+            deleteImage(name, url);
+            closeLightbox();
+        }
+        
+        // Delete image from library
+        function deleteImage(name, url) {
+            // Remove from state
+            state.images = state.images.filter(img => img.url !== url);
+            
+            // Remove from UI
+            const imageItem = document.querySelector(`.imag-tools-image-item[data-url="${url}"]`);
+            if (imageItem) imageItem.remove();
+            
+            // Reset selection if deleted image was selected
+            if (state.selectedImage && state.selectedImage.url === url) {
+                state.selectedImage = null;
+                updatePreview();
+            }
+            
+            // Show message if no images left
+            if (state.images.length === 0) {
+                elements.imageList.innerHTML = '<div class="imag-tools-no-image">No images uploaded</div>';
+            }
+            
+            // Update dropdowns
+            updateOverlayDropdowns();
+            showToast('Image deleted', 'success');
+        }
+        
+        // Update overlay dropdowns
+        function updateOverlayDropdowns() {
+            const options = state.images.map(img => 
+                `<option value="${img.name}">${img.name}</option>`
+            ).join('');
+            
+            const overlaySelect = document.getElementById('overlayImage');
+            const blitOverlay = document.getElementById('blitOverlay');
+            
+            if (overlaySelect) {
+                overlaySelect.innerHTML = `<option value="">-- Select overlay --</option>${options}`;
+            }
+            
+            if (blitOverlay) {
+                blitOverlay.innerHTML = `<option value="">-- Select overlay --</option>${options}`;
+            }
+        }
+        
+        // Update function parameters UI based on selected function
+        function updateFunctionParams() {
+            const func = elements.functionSelect.value;
+            elements.paramsContainer.innerHTML = '';
+            if (!func) return;
+            
+            switch(func) {
+                case 'ADJUST_ALPHA':
+                    elements.paramsContainer.innerHTML = `
+                        <div class="imag-tools-param-group">
+                            <label>Alpha (0-255)</label>
+                            <input type="number" id="adjustAlpha" value="255" min="0" max="255">
+                        </div>
+                    `;
+                    break;
+                    
+                case 'BL':
+                    // No parameters needed
+                    break;
+                    
+                case 'BRIGHTEN':
+                    elements.paramsContainer.innerHTML = `
+                        <div class="imag-tools-param-group">
+                            <label>Amount (-100 to 100)</label>
+                            <input type="number" id="brightenAmount" value="0" min="-100" max="100">
+                        </div>
+                    `;
+                    break;
+                    
+                case 'CONTRAST':
+                    elements.paramsContainer.innerHTML = `
+                        <div class="imag-tools-param-group">
+                            <label>Factor (0.0-2.0)</label>
+                            <input type="number" id="contrastFactor" value="1.0" min="0" max="2" step="0.1">
+                        </div>
+                    `;
+                    break;
+                    
+                case 'CROP':
+                    elements.paramsContainer.innerHTML = `
+                        <div class="imag-tools-param-group">
+                            <label>X Position</label>
+                            <input type="number" id="cropX" value="0" min="0">
+                        </div>
+                        <div class="imag-tools-param-group">
+                            <label>Y Position</label>
+                            <input type="number" id="cropY" value="0" min="0">
+                        </div>
+                        <div class="imag-tools-param-group">
+                            <label>Width</label>
+                            <input type="number" id="cropWidth" value="100" min="1">
+                        </div>
+                        <div class="imag-tools-param-group">
+                            <label>Height</label>
+                            <input type="number" id="cropHeight" value="100" min="1">
+                        </div>
+                    `;
+                    break;
+                    
+                case 'CS':
+                    elements.paramsContainer.innerHTML = `
+                        <div class="imag-tools-param-group">
+                            <label>Red</label>
+                            <input type="number" id="csRed" value="255" min="0" max="255">
+                        </div>
+                        <div class="imag-tools-param-group">
+                            <label>Green</label>
+                            <input type="number" id="csGreen" value="255" min="0" max="255">
+                        </div>
+                        <div class="imag-tools-param-group">
+                            <label>Blue</label>
+                            <input type="number" id="csBlue" value="255" min="0" max="255">
+                        </div>
+                    `;
+                    break;
+                    
+                case 'FL':
+                    elements.paramsContainer.innerHTML = `
+                        <div class="imag-tools-param-group">
+                            <label>Horizontal Flip</label>
+                            <input type="checkbox" id="flipHorizontal">
+                        </div>
+                        <div class="imag-tools-param-group">
+                            <label>Vertical Flip</label>
+                            <input type="checkbox" id="flipVertical">
+                        </div>
+                    `;
+                    break;
+                    
+                case 'GS':
+                    // No parameters needed
+                    break;
+                    
+                case 'NEG':
+                    // No parameters needed
+                    break;
+                    
+                case 'O':
+                    elements.paramsContainer.innerHTML = `
+                        <div class="imag-tools-param-group">
+                            <label>Opacity (0.0-1.0)</label>
+                            <input type="number" id="opacityValue" value="1.0" min="0" max="1" step="0.1">
+                        </div>
+                    `;
+                    break;
+                    
+                case 'R':
+                    elements.paramsContainer.innerHTML = `
+                        <div class="imag-tools-param-group" style="grid-column: span 2;">
+                            <label>Degrees</label>
+                            <input type="number" id="rotateDeg" value="0" min="0" max="360" style="width:100%">
+                        </div>
+                    `;
+                    break;
+                    
+                case 'RC':
+                    elements.paramsContainer.innerHTML = `
+                        <div class="imag-tools-param-group">
+                            <label>Red</label>
+                            <input type="number" id="rcRed" value="255" min="0" max="255">
+                        </div>
+                        <div class="imag-tools-param-group">
+                            <label>Green</label>
+                            <input type="number" id="rcGreen" value="255" min="0" max="255">
+                        </div>
+                        <div class="imag-tools-param-group">
+                            <label>Blue</label>
+                            <input type="number" id="rcBlue" value="255" min="0" max="255">
+                        </div>
+                    `;
+                    break;
+                    
+                case 'SCALE':
+                    elements.paramsContainer.innerHTML = `
+                        <div class="imag-tools-param-group">
+                            <label>Width</label>
+                            <input type="number" id="scaleWidth" value="100" min="1">
+                        </div>
+                        <div class="imag-tools-param-group">
+                            <label>Height</label>
+                            <input type="number" id="scaleHeight" value="100" min="1">
+                        </div>
+                    `;
+                    break;
+                    
+                case 'BLIT':
+                    elements.paramsContainer.innerHTML = `
+                        <div class="imag-tools-param-group full-width">
+                            <label>Overlay Image</label>
+                            <select id="blitOverlay" style="width:100%">
+                                <option value="">-- Select overlay --</option>
+                                ${state.images.map(img => 
+                                    `<option value="${img.name}">${img.name}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div class="imag-tools-param-group">
+                            <label>X Position</label>
+                            <input type="number" id="blitX" value="0" min="0">
+                        </div>
+                        <div class="imag-tools-param-group">
+                            <label>Y Position</label>
+                            <input type="number" id="blitY" value="0" min="0">
+                        </div>
+                    `;
+                    break;
+            }
+        }
+        
+        // Add function to the chain
+        function addFunctionToChain() {
+            const func = elements.functionSelect.value;
+            if (!func) {
+                showToast('Please select a function first', 'error');
+                return;
+            }
+            
+            let funcString = '';
+            let params = {};
+            
+            switch(func) {
+                case 'ADJUST_ALPHA':
+                    const adjustAlpha = document.getElementById('adjustAlpha').value;
+                    if (!adjustAlpha) {
+                        showToast('Please enter alpha value', 'error');
+                        return;
+                    }
+                    funcString = `~ADJUST_ALPHA(${adjustAlpha})`;
+                    params = { alpha: parseInt(adjustAlpha) };
+                    break;
+                    
+                case 'BL':
+                    funcString = `~BL()`;
+                    params = {};
+                    break;
+                    
+                case 'BRIGHTEN':
+                    const brightenAmount = document.getElementById('brightenAmount').value;
+                    if (!brightenAmount) {
+                        showToast('Please enter brightness amount', 'error');
+                        return;
+                    }
+                    funcString = `~BRIGHTEN(${brightenAmount})`;
+                    params = { amount: parseInt(brightenAmount) };
+                    break;
+                    
+                case 'CONTRAST':
+                    const contrastFactor = document.getElementById('contrastFactor').value;
+                    if (!contrastFactor) {
+                        showToast('Please enter contrast factor', 'error');
+                        return;
+                    }
+                    funcString = `~CONTRAST(${contrastFactor})`;
+                    params = { factor: parseFloat(contrastFactor) };
+                    break;
+                    
+                case 'CROP':
+                    const cropX = document.getElementById('cropX').value;
+                    const cropY = document.getElementById('cropY').value;
+                    const cropWidth = document.getElementById('cropWidth').value;
+                    const cropHeight = document.getElementById('cropHeight').value;
+                    
+                    if (!cropX || !cropY || !cropWidth || !cropHeight) {
+                        showToast('Please fill all crop parameters', 'error');
+                        return;
+                    }
+                    
+                    funcString = `~CROP(${cropX},${cropY},${cropWidth},${cropHeight})`;
+                    params = { x: parseInt(cropX), y: parseInt(cropY), width: parseInt(cropWidth), height: parseInt(cropHeight) };
+                    break;
+                    
+                case 'CS':
+                    const csRed = document.getElementById('csRed').value;
+                    const csGreen = document.getElementById('csGreen').value;
+                    const csBlue = document.getElementById('csBlue').value;
+                    if (!csRed || !csGreen || !csBlue) {
+                        showToast('Please enter RGB values', 'error');
+                        return;
+                    }
+                    
+                    funcString = `~CS(${csRed},${csGreen},${csBlue})`;
+                    params = { r: parseInt(csRed), g: parseInt(csGreen), b: parseInt(csBlue) };
+                    break;
+                    
+                case 'FL':
+                    const flipHorizontal = document.getElementById('flipHorizontal').checked ? 1 : 0;
+                    const flipVertical = document.getElementById('flipVertical').checked ? 1 : 0;
+                    funcString = `~FL(${flipHorizontal},${flipVertical})`;
+                    params = { horizontal: flipHorizontal, vertical: flipVertical };
+                    break;
+                    
+                case 'GS':
+                    funcString = `~GS()`;
+                    params = {};
+                    break;
+                    
+                case 'NEG':
+                    funcString = `~NEG()`;
+                    params = {};
+                    break;
+                    
+                case 'O':
+                    const opacityValue = document.getElementById('opacityValue').value;
+                    if (!opacityValue) {
+                        showToast('Please enter opacity value', 'error');
+                        return;
+                    }
+                    funcString = `~O(${opacityValue})`;
+                    params = { opacity: parseFloat(opacityValue) };
+                    break;
+                    
+                case 'R':
+                    const rotateDeg = document.getElementById('rotateDeg').value;
+                    if (!rotateDeg) {
+                        showToast('Please enter rotation degrees', 'error');
+                        return;
+                    }
+                    
+                    funcString = `~R(${rotateDeg})`;
+                    params = { degrees: parseInt(rotateDeg) };
+                    break;
+                    
+                case 'RC':
+                    const rcRed = document.getElementById('rcRed').value;
+                    const rcGreen = document.getElementById('rcGreen').value;
+                    const rcBlue = document.getElementById('rcBlue').value;
+                    if (!rcRed || !rcGreen || !rcBlue) {
+                        showToast('Please enter RGB values', 'error');
+                        return;
+                    }
+                    
+                    funcString = `~RC(${rcRed},${rcGreen},${rcBlue})`;
+                    params = { r: parseInt(rcRed), g: parseInt(rcGreen), b: parseInt(rcBlue) };
+                    break;
+                    
+                case 'SCALE':
+                    const scaleWidth = document.getElementById('scaleWidth').value;
+                    const scaleHeight = document.getElementById('scaleHeight').value;
+                    if (!scaleWidth || !scaleHeight) {
+                        showToast('Please enter width and height', 'error');
+                        return;
+                    }
+                    
+                    funcString = `~SCALE(${scaleWidth},${scaleHeight})`;
+                    params = { width: parseInt(scaleWidth), height: parseInt(scaleHeight) };
+                    break;
+                    
+                case 'BLIT':
+                    const blitOverlay = document.getElementById('blitOverlay').value;
+                    const blitX = document.getElementById('blitX').value;
+                    const blitY = document.getElementById('blitY').value;
+                    if (!blitOverlay || blitX === '' || blitY === '') {
+                        showToast('Please fill all blit parameters', 'error');
+                        return;
+                    }
+                    
+                    // Find image URL
+                    const blitImage = state.images.find(img => img.name === blitOverlay);
+                    if (!blitImage) {
+                        showToast('Selected image not found', 'error');
+                        return;
+                    }
+                    
+                    // Updated parameter order: overlay first
+                    funcString = `~BLIT(${blitOverlay},${blitX},${blitY})`;
+                    params = { 
+                        x: parseInt(blitX), 
+                        y: parseInt(blitY), 
+                        image: blitOverlay,
+                        url: blitImage.url
+                    };
+                    break;
+            }
+            
+            state.functionChain.push({
+                type: func,
+                func: funcString,
+                params: params
+            });
+            
+            updateChainDisplay();
+            showToast('Function added to chain', 'success');
+            // Automatically update preview
+            updatePreview();
+            
+            // Clear selection for next function
+            elements.functionSelect.value = '';
+            updateFunctionParams();
+        }
+        
+        // Update the function chain display
+        function updateChainDisplay() {
+            if (state.functionChain.length === 0) {
+                elements.chainDisplay.textContent = 'No functions added';
+                return;
+            }
+            
+            elements.chainDisplay.textContent = state.functionChain.map(f => f.func).join('');
+        }
+        
+        // Reset function chain
+        function resetFunctionChain() {
+            state.functionChain = [];
+            updateChainDisplay();
+            updatePreview(); // Auto-update preview after reset
+            showToast('Function chain reset', 'success');
+        }
+        
+        // Reset preview only
+        function resetPreview() {
+            if (state.selectedImage) {
+                elements.previewImage.src = state.selectedImage.url;
+                elements.codeOutput.textContent = `image="${state.selectedImage.name}"`;
+                showToast('Preview reset', 'success');
+            } else {
+                showToast('No image selected', 'error');
+            }
+        }
+        
+        // Reset entire tool
+        function resetAll() {
+            // Clear state
+            state.images = [];
+            state.selectedImage = null;
+            state.functionChain = [];
+            
+            // Clear UI
+            elements.imageList.innerHTML = '<div class="imag-tools-no-image">No images uploaded</div>';
+            elements.chainDisplay.textContent = 'No functions added';
+            elements.previewImage.style.display = 'none';
+            elements.codeOutput.textContent = '// Generated code will appear here';
+            
+            // Reset function parameters
+            elements.functionSelect.value = '';
+            elements.paramsContainer.innerHTML = '';
+            
+            showToast('All data has been reset', 'success');
+        }
+        
+        // Apply functions to selected image
+        async function applyFunctions() {
+            if (!state.selectedImage) {
+                showToast('Please select an image first', 'error');
+                return;
+            }
+            
+            if (state.functionChain.length === 0) {
+                showToast('Please add at least one function to the chain', 'error');
+                return;
+            }
+            
+            try {
+                // Load base image
+                const img = new Image();
+                img.src = state.selectedImage.url;
+                
+                // Wait for image to load
+                await new Promise((resolve) => {
+                    img.onload = resolve;
+                    img.onerror = () => {
+                        showToast('Error loading base image', 'error');
+                        resolve();
+                    };
+                });
+                
+                // Start with base image
+                let canvas = createCanvasFromImage(img);
+                
+                // Apply each function in the chain
+                for (const func of state.functionChain) {
+                    if (imageProcessors[func.type]) {
+                        // Handle async functions
+                        canvas = await imageProcessors[func.type](canvas, func.params);
+                    }
+                }
+                
+                // Convert canvas to data URL for display
+                elements.previewImage.src = canvas.toDataURL();
+                elements.previewImage.style.display = 'block';
+                
+                // Generate the code output
+                const filename = state.selectedImage.name;
+                const functionChain = state.functionChain.map(f => f.func).join('');
+                elements.codeOutput.textContent = `image="${filename}${functionChain}"`;
+                
+                // Only show success if we actually processed something
+                if (state.functionChain.length > 0) {
+                    showToast('Functions applied', 'success');
+                }
+            } catch (error) {
+                console.error('Error processing image:', error);
+                showToast('Error processing image', 'error');
+            }
+        }
+        
+        // Copy path to clipboard
+        function copyPathToClipboard() {
+            const text = elements.codeOutput.textContent;
+            if (!text || text.includes('will appear here')) {
+                showToast('No path to copy', 'error');
+                return;
+            }
+            
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    showToast('Path copied to clipboard!', 'success');
+                })
+                .catch(err => {
+                    showToast('Failed to copy: ' + err, 'error');
+                });
+        }
+        
+        // Save current path
+        function savePath() {
+            const path = elements.codeOutput.textContent;
+            if (!path || path.includes('will appear here')) {
+                showToast('No path to save', 'error');
+                return;
+            }
+            
+            const name = prompt('Enter a name for this path:', `Path ${state.savedPaths.length + 1}`);
+            if (!name) return;
+            
+            const newPath = {
+                id: Date.now(),
+                name: name,
+                path: path,
+                timestamp: new Date().toISOString()
+            };
+            
+            state.savedPaths.push(newPath);
+            saveToLocalStorage();
+            renderSavedPaths();
+            showToast(`"${name}" saved successfully!`, 'success');
+            elements.savedPathsModal.style.display = 'flex';
+        }
+        
+        // Load saved paths from localStorage
+        function loadSavedPaths() {
+            const saved = localStorage.getItem('wesnothSavedPaths');
+            if (saved) {
+                state.savedPaths = JSON.parse(saved);
+                renderSavedPaths();
+            }
+        }
+        
+        // Save paths to localStorage
+        function saveToLocalStorage() {
+            localStorage.setItem('wesnothSavedPaths', JSON.stringify(state.savedPaths));
+        }
+        
+        // Render saved paths in the modal
+        function renderSavedPaths() {
+            if (state.savedPaths.length === 0) {
+                elements.savedPathsList.innerHTML = '<div class="imag-tools-no-saved">No saved paths yet</div>';
+                return;
+            }
+            
+            elements.savedPathsList.innerHTML = '';
+            
+            state.savedPaths.forEach(path => {
+                const pathEl = document.createElement('div');
+                pathEl.className = 'imag-tools-saved-path';
+                pathEl.innerHTML = `
+                    <div class="imag-tools-saved-path-name">${path.name}</div>
+                    <div class="imag-tools-saved-path-value">${path.path}</div>
+                    <div class="imag-tools-saved-path-actions">
+                        <button class="imag-tools-btn imag-tools-btn-copy imag-tools-copy-saved" data-id="${path.id}">
+                            <svg class="svg-icon" viewBox="0 0 448 512" aria-hidden="true">
+                                <path d="M208 0H332.1c12.7 0 24.9 5.1 33.9 14.1l67.9 67.9c9 9 14.1 21.2 14.1 33.9V336c0 26.5-21.5 48-48 48H208c-26.5 0-48-21.5-48-48V48c0-26.5 21.5-48 48-48zM48 128h80v64H64V448H256V416h64v48c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V176c0-26.5 21.5-48 48-48z"/>
+                            </svg>
+                            Copy
+                        </button>
+                        <button class="imag-tools-btn imag-tools-btn-danger imag-tools-delete-saved" data-id="${path.id}">
+                            <svg class="svg-icon" viewBox="0 0 448 512" aria-hidden="true">
+                                <path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"/>
+                            </svg>
+                            Delete
+                        </button>
+                    </div>
+                `;
+                
+                elements.savedPathsList.appendChild(pathEl);
+            });
+            
+            // Add event listeners for new buttons
+            document.querySelectorAll('.imag-tools-copy-saved').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.target.closest('button').dataset.id;
+                    const path = state.savedPaths.find(p => p.id == id);
+                    if (path) {
+                        navigator.clipboard.writeText(path.path)
+                            .then(() => {
+                                showToast('Path copied to clipboard!', 'success');
+                            })
+                            .catch(err => {
+                                showToast('Failed to copy: ' + err, 'error');
+                            });
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.imag-tools-delete-saved').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.target.closest('button').dataset.id;
+                    state.savedPaths = state.savedPaths.filter(p => p.id != id);
+                    saveToLocalStorage();
+                    renderSavedPaths();
+                    showToast('Path deleted', 'success');
+                });
+            });
+        }
+        
+        // Close modal
+        function closeModal() {
+            elements.savedPathsModal.style.display = 'none';
+        }
+        
+        // Show toast notification
+        function showToast(message, type) {
+            elements.toastMessage.textContent = message;
+            elements.toastIcon.innerHTML = toastIcons[type];
+            elements.toast.className = 'imag-tools-toast';
+            elements.toast.classList.add('show');
+            elements.toast.classList.add(`toast-${type}`);
+            
+            // Hide after delay
+            setTimeout(() => {
+                elements.toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Update preview
+        function updatePreview() {
+            if (state.selectedImage) {
+                elements.previewImage.style.display = 'block';
+                elements.previewImage.src = state.selectedImage.url;
+                elements.codeOutput.textContent = `image="${state.selectedImage.name}"`;
+            } else {
+                elements.previewImage.style.display = 'none';
+                elements.codeOutput.textContent = '// Generated code will appear here';
+            }
+        }
+        
+        // Initialize the application when the page loads
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
