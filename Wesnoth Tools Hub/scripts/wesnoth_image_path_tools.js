@@ -12,6 +12,73 @@ function getPathExtension(path) {
     if (lastDot === -1) return '';
     return path.substring(lastDot + 1);
 }
+// Add this at the top of wesnoth_image_path_tools.js
+window.imageTransforms = {
+    apply: function(imgElement, transform) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = imgElement.naturalWidth;
+        canvas.height = imgElement.naturalHeight;
+        ctx.drawImage(imgElement, 0, 0);
+        
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        
+        switch(transform.func) {
+            case 'BRIGHTEN':
+			const amount = parseInt(transform.params[0]);
+			for (let i = 0; i < data.length; i += 4) {
+				data[i] = Math.min(255, Math.max(0, data[i] + amount));
+				data[i+1] = Math.min(255, Math.max(0, data[i+1] + amount));
+				data[i+2] = Math.min(255, Math.max(0, data[i+2] + amount));
+			}
+			break;
+			
+            case 'CONTRAST':
+			const factor = parseFloat(transform.params[0]);
+			for (let i = 0; i < data.length; i += 4) {
+				data[i] = Math.min(255, Math.max(0, factor * (data[i] - 128) + 128));
+				data[i+1] = Math.min(255, Math.max(0, factor * (data[i+1] - 128) + 128));
+				data[i+2] = Math.min(255, Math.max(0, factor * (data[i+2] - 128) + 128));
+			}
+			break;
+			
+            case 'ADJUST_ALPHA':
+            case 'O':
+			const alpha = transform.func === 'ADJUST_ALPHA' 
+			? parseInt(transform.params[0]) 
+			: Math.round(parseFloat(transform.params[0]) * 255);
+			for (let i = 3; i < data.length; i += 4) {
+				data[i] = alpha;
+			}
+			break;
+			
+			case 'R':
+			const degrees = parseInt(transform.params[0]);
+			const radians = degrees * Math.PI / 180;
+			
+			const w = imgElement.naturalWidth;
+			const h = imgElement.naturalHeight;
+			const sin = Math.abs(Math.sin(radians));
+			const cos = Math.abs(Math.cos(radians));
+			const newWidth = Math.floor(w * cos + h * sin);
+			const newHeight = Math.floor(h * cos + w * sin);
+			
+			canvas.width = newWidth;
+			canvas.height = newHeight;
+			ctx.save();
+			ctx.translate(newWidth/2, newHeight/2);
+			ctx.rotate(radians);
+			ctx.drawImage(imgElement, -w/2, -h/2, w, h);
+			ctx.restore();
+			return canvas.toDataURL();
+		}
+        
+        ctx.putImageData(imageData, 0, 0);
+        return canvas.toDataURL();
+	}
+};
 document.addEventListener('DOMContentLoaded', function() {
 	// Toggle help section
 	const toggleHelpBtn = document.getElementById('imag-tools-toggle-help');
@@ -54,132 +121,132 @@ document.addEventListener('DOMContentLoaded', function() {
 	
 	// Add directory function
 	async function addDirectory() {
-    try {
-        // Request directory access first
-        const handle = await window.showDirectoryPicker();
-        
-        // Now show progress UI
-        if (!progressContainer) {
-            progressContainer = document.createElement('div');
-            progressContainer.id = 'imag-tools-progress-container';
-            progressContainer.style.cssText = `
+		try {
+			// Request directory access first
+			const handle = await window.showDirectoryPicker();
+			
+			// Now show progress UI
+			if (!progressContainer) {
+				progressContainer = document.createElement('div');
+				progressContainer.id = 'imag-tools-progress-container';
+				progressContainer.style.cssText = `
                 margin: 15px 0; 
                 background: rgba(0,0,0,0.2); 
                 padding: 10px; 
                 border-radius: 4px;
                 display: none;
-            `;
-            
-            const dirDisplay = document.createElement('div');
-            currentDirSpan = document.createElement('span');
-            currentDirSpan.style.fontWeight = 'bold';
-            dirDisplay.innerHTML = 'Scanning: ';
-            dirDisplay.appendChild(currentDirSpan);
-            
-            progressBar = document.createElement('progress');
-            progressBar.id = 'imag-tools-progress-bar';
-            progressBar.style.width = '100%';
-            progressBar.max = 100;
-            progressBar.value = 0;
-            
-            progressContainer.appendChild(dirDisplay);
-            progressContainer.appendChild(progressBar);
-            document.querySelector('.imag-tools-controls').after(progressContainer);
-        }
-        
-        // Show progress UI
-        progressContainer.style.display = 'block';
-        currentDirSpan.textContent = handle.name;
-        progressBar.value = 0;
-        
-        // Create directory object
-        const directory = {
-            id: Date.now().toString(),
-            handle: handle,
-            name: handle.name,
-            images: []
-        };
-        
-        // Add to state
-        directories.push(directory);
-        renderDirectories();
-        
-        // Scan for images
-        await scanDirectoryForImages(directory, handle);
-        
-        // Render images
-        renderImages();
-    } catch (error) {
-        console.error('Error loading directory:', error);
-        alert('Error loading directory. Please try again.');
-    } finally {
-        if (progressContainer) {
-            progressContainer.style.display = 'none';
-        }
-    }
-}
-
-// Recursive function to scan directory for images
-async function scanDirectoryForImages(directory, handle) {
-    let fileCount = 0;
-    let totalFiles = 0;
-    
-    // First pass: count files
-    for await (const entry of handle.values()) {
-        if (entry.kind === 'file') totalFiles++;
-    }
-    
-    // Second pass: process files
-    for await (const entry of handle.values()) {
-        if (entry.kind === 'file') {
-            fileCount++;
-            progressBar.value = (fileCount / totalFiles) * 100;
-            currentDirSpan.textContent = `${handle.name} (${fileCount}/${totalFiles})`;
-            
-            const file = await entry.getFile();
-            const extension = entry.name.split('.').pop().toLowerCase();
-            
-            if (imageExtensions.includes(extension)) {
-                const url = URL.createObjectURL(file);
-                
-                directory.images.push({
-                    id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-                    name: entry.name,
-                    path: `${directory.name}/${entry.name}`,
-                    url: url,
-                    file: file
-                });
-            }
-        } else if (entry.kind === 'directory') {
-            // Recursively scan subdirectories
-            await scanDirectoryForImages(directory, entry);
-        }
-    }
-}
+				`;
+				
+				const dirDisplay = document.createElement('div');
+				currentDirSpan = document.createElement('span');
+				currentDirSpan.style.fontWeight = 'bold';
+				dirDisplay.innerHTML = 'Scanning: ';
+				dirDisplay.appendChild(currentDirSpan);
+				
+				progressBar = document.createElement('progress');
+				progressBar.id = 'imag-tools-progress-bar';
+				progressBar.style.width = '100%';
+				progressBar.max = 100;
+				progressBar.value = 0;
+				
+				progressContainer.appendChild(dirDisplay);
+				progressContainer.appendChild(progressBar);
+				document.querySelector('.imag-tools-controls').after(progressContainer);
+			}
+			
+			// Show progress UI
+			progressContainer.style.display = 'block';
+			currentDirSpan.textContent = handle.name;
+			progressBar.value = 0;
+			
+			// Create directory object
+			const directory = {
+				id: Date.now().toString(),
+				handle: handle,
+				name: handle.name,
+				images: []
+			};
+			
+			// Add to state
+			directories.push(directory);
+			renderDirectories();
+			
+			// Scan for images
+			await scanDirectoryForImages(directory, handle);
+			
+			// Render images
+			renderImages();
+			} catch (error) {
+			console.error('Error loading directory:', error);
+			alert('Error loading directory. Please try again.');
+			} finally {
+			if (progressContainer) {
+				progressContainer.style.display = 'none';
+			}
+		}
+	}
+	
+	// Recursive function to scan directory for images
+	async function scanDirectoryForImages(directory, handle) {
+		let fileCount = 0;
+		let totalFiles = 0;
+		
+		// First pass: count files
+		for await (const entry of handle.values()) {
+			if (entry.kind === 'file') totalFiles++;
+		}
+		
+		// Second pass: process files
+		for await (const entry of handle.values()) {
+			if (entry.kind === 'file') {
+				fileCount++;
+				progressBar.value = (fileCount / totalFiles) * 100;
+				currentDirSpan.textContent = `${handle.name} (${fileCount}/${totalFiles})`;
+				
+				const file = await entry.getFile();
+				const extension = entry.name.split('.').pop().toLowerCase();
+				
+				if (imageExtensions.includes(extension)) {
+					const url = URL.createObjectURL(file);
+					
+					directory.images.push({
+						id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+						name: entry.name,
+						path: `${directory.name}/${entry.name}`,
+						url: url,
+						file: file
+					});
+				}
+				} else if (entry.kind === 'directory') {
+				// Recursively scan subdirectories
+				await scanDirectoryForImages(directory, entry);
+			}
+		}
+	}
 	//  render directories
-function renderDirectories() {
-    const container = document.getElementById('imag-tools-directories-container');
-    if (!container) return;
-    
-    container.innerHTML = '<h3>Loaded Directories</h3>';
-    
-    if (directories.length === 0) {
-        container.innerHTML += '<div class="imag-tools-empty-state">No directories loaded</div>';
-        return;
-    }
-    
-    const list = document.createElement('div');
-    list.className = 'imag-tools-directories-list';
-    
-    directories.forEach(dir => {
-        const dirElement = document.createElement('div');
-        dirElement.className = 'imag-tools-directory-item';
-        dirElement.textContent = dir.name;
-        list.appendChild(dirElement);
-    });
-    
-    container.appendChild(list);
-}
+	function renderDirectories() {
+		const container = document.getElementById('imag-tools-directories-container');
+		if (!container) return;
+		
+		container.innerHTML = '<h3>Loaded Directories</h3>';
+		
+		if (directories.length === 0) {
+			container.innerHTML += '<div class="imag-tools-empty-state">No directories loaded</div>';
+			return;
+		}
+		
+		const list = document.createElement('div');
+		list.className = 'imag-tools-directories-list';
+		
+		directories.forEach(dir => {
+			const dirElement = document.createElement('div');
+			dirElement.className = 'imag-tools-directory-item';
+			dirElement.textContent = dir.name;
+			list.appendChild(dirElement);
+		});
+		
+		container.appendChild(list);
+	}
 	// Render images in grid
 	function renderImages() {
 		imagesContainer.innerHTML = '';
@@ -311,8 +378,11 @@ function renderDirectories() {
 			// Get base name and extension
 			const extension = getPathExtension(image.path);
 			const baseName = getPathBaseName(image.path);
-window.currentImageBase = baseName;
-window.currentImageExt = extension;
+			window.currentImageBase = baseName;
+			window.currentImageExt = extension;
+			
+			// Store original image URL for transformations
+			lightboxImg.dataset.original = image.url;
 			
 			// Update path display
 			lightboxImagePath.innerHTML = `
@@ -330,25 +400,25 @@ window.currentImageExt = extension;
 		}
 	}
 	
-// get selected images
-function getSelectedImagesData() {
-    const images = [];
-    selectedImages.forEach(id => {
-        for (const dir of directories) {
-            const img = dir.images.find(i => i.id === id);
-            if (img) {
-                images.push({
-                    id: img.id,
-                    path: img.path,
-                    baseName: getPathBaseName(img.path),
-                    extension: getPathExtension(img.path)
-                });
-                break;
-            }
-        }
-    });
-    return images;
-}
+	// get selected images
+	function getSelectedImagesData() {
+		const images = [];
+		selectedImages.forEach(id => {
+			for (const dir of directories) {
+				const img = dir.images.find(i => i.id === id);
+				if (img) {
+					images.push({
+						id: img.id,
+						path: img.path,
+						baseName: getPathBaseName(img.path),
+						extension: getPathExtension(img.path)
+					});
+					break;
+				}
+			}
+		});
+		return images;
+	}
 	// Update selected items list in sidebar
 	function updateSelectedItemsList() {
 		selectedItemsContainer.innerHTML = '';
@@ -466,10 +536,14 @@ function getSelectedImagesData() {
 			const item = document.createElement('div');
 			item.className = 'imag-tools-grid-item';
 			item.dataset.id = imageId;
-			
+			item.dataset.baseName = baseName;
+			item.dataset.extension = extension;
 			
 			item.innerHTML = `
-			<img src="${image.url}" alt="${image.name}">
+			<img src="${image.url}" alt="${image.name}" 
+			data-original="${image.url}"> <!-- Ensure original is stored -->
+			<input type="text" class="imag-tools-grid-item-path-input" 
+			value="${baseName}.${extension}">
 			`;
 			
 			// Apply transformations to the image
@@ -493,6 +567,27 @@ function getSelectedImagesData() {
 		gridContainer.appendChild(grid);
 	}
 	
+	function applyTransformToAllImages(transformFunc, params) {
+		const gridItems = document.querySelectorAll('.imag-tools-grid-item');
+		gridItems.forEach(item => {
+			const img = item.querySelector('img');
+			if (img && img.dataset.original) {
+				const tempImg = new Image();
+				tempImg.onload = function() {
+					try {
+						const transformed = window.imageTransforms.apply(tempImg, {
+							func: transformFunc,
+							params: params
+						});
+						img.src = transformed;
+						} catch (e) {
+						console.error('Transformation failed:', e);
+					}
+				};
+				tempImg.src = img.dataset.original;
+			}
+		});
+	}
 	function renderPathList() {
 		const container = lightboxImagePath;
 		container.innerHTML = '';
@@ -558,7 +653,24 @@ function getSelectedImagesData() {
 		
 		el.style.transform = `rotate(${rotationValue}deg)`;
 	}
-	
+	window.applyTransformationsToElement = function(el) {
+		const zoomValue = document.getElementById('imag-tools-lightbox-zoom').value;
+		const rotationValue = document.getElementById('imag-tools-lightbox-rotation').value;
+		
+		el.style.objectFit = '';
+		el.style.width = '';
+		el.style.height = '';
+		
+		if (zoomValue === 'contain') {
+			el.style.objectFit = 'contain';
+			} else {
+			el.style.width = `${zoomValue}%`;
+			el.style.height = 'auto';
+		}
+		
+		el.style.transform = `rotate(${rotationValue}deg)`;
+		return el;
+	};
 	// Initialize
 	chooseDirectoryBtn.addEventListener('click', addDirectory);
 	zoomSelect.addEventListener('change', applyImageTransformations);
@@ -603,5 +715,5 @@ function getSelectedImagesData() {
 			}
 		}
 	});
-window.getSelectedImagesData = getSelectedImagesData;
+	window.getSelectedImagesData = getSelectedImagesData;
 });

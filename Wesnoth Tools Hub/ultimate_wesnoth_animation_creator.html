@@ -1,0 +1,2112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Wesnoth Animation Creator</title>
+    <style>
+        :root {
+            --imag-animat-wesnoth-green: #4a6b2a;
+            --imag-animat-wesnoth-light: #a3b18a;
+            --imag-animat-wesnoth-dark: #344e41;
+            --imag-animat-wesnoth-gold: #d4a017;
+            --imag-animat-wesnoth-blue: #5d8aa8;
+            --imag-animat-wesnoth-red: #b22222;
+            --imag-animat-wesnoth-purple: #9370db;
+            --imag-animat-wesnoth-brown: #8b4513;
+            --imag-animat-wesnoth-silver: #c0c0c0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .imag-animat-body {
+            background: linear-gradient(135deg, #1a2a32, #2c4a3e);
+            color: #e0e1dd;
+            min-height: 100vh;
+            padding: 20px;
+            background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="%232c4a3e"/><path d="M0 0L100 100M100 0L0 100" stroke="%231a2a32" stroke-width="1.5"/></svg>');
+            background-size: 40px 40px;
+        }
+        
+        .imag-animat-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+        
+        .imag-animat-header {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid var(--imag-animat-wesnoth-gold);
+            margin-bottom: 20px;
+            background: rgba(26, 42, 50, 0.7);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .imag-animat-header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><path d="M20,0 L40,20 L20,40 L0,20 Z" fill="none" stroke="%234a6b2a" stroke-width="0.5"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .imag-animat-h1 {
+            color: var(--imag-animat-wesnoth-gold);
+            text-shadow: 0 0 10px rgba(212, 160, 23, 0.5);
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            font-family: 'Palatino', serif;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .imag-animat-subtitle {
+            color: var(--imag-animat-wesnoth-light);
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .imag-animat-panel {
+            background: rgba(26, 42, 50, 0.85);
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--imag-animat-wesnoth-green);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .imag-animat-panel::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="30" height="30" fill="none" stroke="%23344e41" stroke-width="0.3"/></svg>');
+            opacity: 0.2;
+        }
+        
+        .imag-animat-panel-title {
+            color: var(--imag-animat-wesnoth-gold);
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--imag-animat-wesnoth-green);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .imag-animat-panel-title h2 {
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .imag-animat-upload-area {
+            border: 3px dashed var(--imag-animat-wesnoth-light);
+            border-radius: 8px;
+            padding: 40px 30px;
+            text-align: center;
+            background: rgba(52, 78, 65, 0.2);
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 25px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .imag-animat-upload-area:hover {
+            background: rgba(52, 78, 65, 0.4);
+            border-color: var(--imag-animat-wesnoth-gold);
+            transform: translateY(-3px);
+        }
+        
+        .imag-animat-upload-area i {
+            font-size: 3.5rem;
+            color: var(--imag-animat-wesnoth-light);
+            margin-bottom: 15px;
+            display: block;
+            filter: drop-shadow(0 0 5px rgba(163, 177, 138, 0.5));
+        }
+        
+        .imag-animat-thumbnails {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+            max-height: 250px;
+            overflow-y: auto;
+            padding: 10px;
+            background: rgba(52, 78, 65, 0.15);
+            border-radius: 8px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .imag-animat-thumbnail {
+            width: 90px;
+            height: 90px;
+            object-fit: cover;
+            border: 2px solid var(--imag-animat-wesnoth-green);
+            border-radius: 6px;
+            cursor: move;
+            background: #3a5a40;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            text-align: center;
+            padding: 5px;
+            position: relative;
+            transition: all 0.2s;
+            overflow: hidden;
+        }
+        
+        .imag-animat-thumbnail:hover {
+            transform: scale(1.05);
+            border-color: var(--imag-animat-wesnoth-gold);
+            box-shadow: 0 0 12px rgba(212, 160, 23, 0.4);
+        }
+        
+        .imag-animat-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .imag-animat-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin: 25px 0;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .imag-animat-control-group {
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .imag-animat-control-group-full {
+            grid-column: 1 / -1;
+        }
+        
+        .imag-animat-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--imag-animat-wesnoth-light);
+            font-weight: 500;
+        }
+        
+        .imag-animat-input-group {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .imag-animat-input-group input {
+            flex: 1;
+        }
+        
+        input[type="range"], input[type="number"], select, textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--imag-animat-wesnoth-green);
+            background: #2d3e40;
+            color: #e0e1dd;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        
+        input[type="range"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--imag-animat-wesnoth-gold);
+            box-shadow: 0 0 8px rgba(212, 160, 23, 0.4);
+        }
+        
+        .imag-animat-btn {
+            background: linear-gradient(to bottom, var(--imag-animat-wesnoth-green), var(--imag-animat-wesnoth-dark));
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+            border: 1px solid #5a7d5a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 1rem;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .imag-animat-btn:hover {
+            background: linear-gradient(to bottom, #5a8c3a, #3d5a40);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+        
+        .imag-animat-btn-primary {
+            background: linear-gradient(to bottom, var(--imag-animat-wesnoth-gold), #b8860b);
+            border: 1px solid #d4a017;
+        }
+        
+        .imag-animat-btn-primary:hover {
+            background: linear-gradient(to bottom, #e0b040, #c9970c);
+        }
+        
+        .imag-animat-btn-blue {
+            background: linear-gradient(to bottom, var(--imag-animat-wesnoth-blue), #4169e1);
+            border: 1px solid #5d8aa8;
+        }
+        
+        .imag-animat-btn-blue:hover {
+            background: linear-gradient(to bottom, #6d9ac8, #4a78d8);
+        }
+        
+        .imag-animat-btn-red {
+            background: linear-gradient(to bottom, var(--imag-animat-wesnoth-red), #8b0000);
+            border: 1px solid #b22222;
+        }
+        
+        .imag-animat-btn-red:hover {
+            background: linear-gradient(to bottom, #c24242, #9b0000);
+        }
+        
+        .imag-animat-btn-purple {
+            background: linear-gradient(to bottom, var(--imag-animat-wesnoth-purple), #7b68ee);
+            border: 1px solid #9370db;
+        }
+        
+        .imag-animat-btn-purple:hover {
+            background: linear-gradient(to bottom, #a890e5, #8a7dee);
+        }
+        
+        .imag-animat-preview-container {
+            position: relative;
+            width: 100%;
+            height: 350px;
+            background: #1e2b2e;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid var(--imag-animat-wesnoth-green);
+            margin-top: 15px;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
+        }
+        
+        #imag-animat-animationPreview {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: all 0.3s ease;
+        }
+        
+        .imag-animat-halo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.7;
+            pointer-events: none;
+            z-index: 10;
+            filter: drop-shadow(0 0 8px rgba(212, 160, 23, 0.8));
+        }
+        
+        .imag-animat-timeline {
+            grid-column: 1 / -1;
+            margin-top: 25px;
+            padding: 20px;
+        }
+        
+        .imag-animat-timeline-container {
+            display: flex;
+            overflow-x: auto;
+            padding: 15px;
+            background: rgba(26, 42, 50, 0.6);
+            border-radius: 8px;
+            min-height: 120px;
+            position: relative;
+            z-index: 2;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.4);
+        }
+        
+        .imag-animat-timeline-frame {
+            min-width: 100px;
+            height: 100px;
+            margin-right: 12px;
+            border: 2px solid var(--imag-animat-wesnoth-green);
+            border-radius: 8px;
+            background: #2d3e40;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        
+        .imag-animat-timeline-frame:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        }
+        
+        .imag-animat-timeline-frame.imag-animat-active {
+            border-color: var(--imag-animat-wesnoth-gold);
+            box-shadow: 0 0 15px rgba(212, 160, 23, 0.7);
+            transform: scale(1.05);
+        }
+        
+        .imag-animat-timeline-frame.imag-animat-selected {
+            border-color: var(--imag-animat-wesnoth-blue);
+            box-shadow: 0 0 15px rgba(93, 138, 168, 0.7);
+        }
+        
+        .imag-animat-frame-number {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            color: var(--imag-animat-wesnoth-gold);
+            font-size: 14px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .imag-animat-frame-duration {
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+        
+        .imag-animat-status-bar {
+            grid-column: 1 / -1;
+            background: var(--imag-animat-wesnoth-dark);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 25px;
+            font-size: 16px;
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .imag-animat-status-bar::before {
+            content: "⚔️";
+            font-size: 1.5rem;
+        }
+        
+        .imag-animat-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--imag-animat-wesnoth-green);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .imag-animat-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: rgba(52, 78, 65, 0.3);
+            border-radius: 6px 6px 0 0;
+            margin-right: 5px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        
+        .imag-animat-tab:hover {
+            background: rgba(52, 78, 65, 0.5);
+        }
+        
+        .imag-animat-tab.imag-animat-active {
+            background: rgba(52, 78, 65, 0.9);
+            border-bottom: 3px solid var(--imag-animat-wesnoth-gold);
+            color: var(--imag-animat-wesnoth-gold);
+        }
+        
+        .imag-animat-tab-content {
+            display: none;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .imag-animat-tab-content.imag-animat-active {
+            display: block;
+        }
+        
+        .imag-animat-property-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .imag-animat-color-adjustment {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .imag-animat-sound-list {
+            max-height: 180px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(52, 78, 65, 0.3);
+            border-radius: 8px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .imag-animat-sound-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: rgba(52, 78, 65, 0.5);
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+        
+        .imag-animat-sound-item:hover {
+            background: rgba(52, 78, 65, 0.8);
+            transform: translateX(5px);
+        }
+        
+        .imag-animat-sound-controls {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .imag-animat-color-preview {
+            width: 35px;
+            height: 35px;
+            border-radius: 6px;
+            border: 1px solid var(--imag-animat-wesnoth-light);
+            box-shadow: 0 0 8px rgba(163, 177, 138, 0.3);
+        }
+        
+        .imag-animat-preset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .imag-animat-preset {
+            padding: 15px;
+            background: rgba(52, 78, 65, 0.4);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid var(--imag-animat-wesnoth-green);
+        }
+        
+        .imag-animat-preset:hover {
+            background: rgba(52, 78, 65, 0.7);
+            transform: translateY(-3px);
+            border-color: var(--imag-animat-wesnoth-gold);
+        }
+        
+        .imag-animat-preset h4 {
+            color: var(--imag-animat-wesnoth-gold);
+            margin-bottom: 8px;
+        }
+        
+        .imag-animat-preset p {
+            font-size: 0.9rem;
+            color: var(--imag-animat-wesnoth-light);
+        }
+        
+        .imag-animat-grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(52, 78, 65, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(52, 78, 65, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            pointer-events: none;
+            z-index: 5;
+            display: none;
+        }
+        
+        .imag-animat-grid-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .imag-animat-export-options {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        
+        .imag-animat-wml-preview {
+            background: rgba(26, 42, 50, 0.7);
+            border: 1px solid var(--imag-animat-wesnoth-green);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .imag-animat-hit-point {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--imag-animat-wesnoth-red);
+            border: 2px solid white;
+            z-index: 20;
+            box-shadow: 0 0 10px rgba(178, 34, 34, 0.8);
+            cursor: move;
+        }
+        
+        .imag-animat-hit-point-label {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(178, 34, 34, 0.8);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        
+        @media (max-width: 900px) {
+            .imag-animat-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .imag-animat-property-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .imag-animat-color-adjustment {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Sound volume control */
+        .imag-animat-volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .imag-animat-volume-slider {
+            flex: 1;
+        }
+        
+        /* Export format selector */
+        .imag-animat-export-select {
+            padding: 12px 15px;
+            border-radius: 6px;
+            border: 1px solid var(--imag-animat-wesnoth-green);
+            background: var(--imag-animat-wesnoth-dark);
+            color: #e0e1dd;
+            font-size: 1rem;
+        }
+        
+        /* Progress bar */
+        .imag-animat-progress-container {
+            width: 100%;
+            height: 20px;
+            background: rgba(52, 78, 65, 0.3);
+            border-radius: 10px;
+            margin: 10px 0;
+            display: none;
+        }
+        
+        .imag-animat-progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, var(--imag-animat-wesnoth-green), var(--imag-animat-wesnoth-gold));
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body class="imag-animat-body">
+    <div class="imag-animat-container">
+        <header class="imag-animat-header">
+            <h1 class="imag-animat-h1">Ultimate Wesnoth Animation Creator</h1>
+            <p class="imag-animat-subtitle">Create professional battle animations for The Battle for Wesnoth with advanced tools and presets</p>
+        </header>
+        
+        <div class="imag-animat-panel">
+            <div class="imag-animat-panel-title">
+                <h2><span>🎨</span> Animation Setup</h2>
+                <span class="imag-animat-btn imag-animat-btn-blue" id="imag-animat-clearBtn">Clear All</span>
+            </div>
+            <div class="imag-animat-upload-area" id="imag-animat-dropZone">
+                <i>🖼️</i>
+                <p>Drag & drop unit sprite images here or click to browse</p>
+                <p><small>(Supports PNG with transparency - Max 10MB each)</small></p>
+                <input type="file" id="imag-animat-fileInput" accept="image/*" multiple style="display: none;">
+            </div>
+            
+            <div class="imag-animat-tabs">
+                <div class="imag-animat-tab imag-animat-active" data-tab="imag-animat-basic">Basic</div>
+                <div class="imag-animat-tab" data-tab="imag-animat-effects">Effects</div>
+                <div class="imag-animat-tab" data-tab="imag-animat-advanced">Advanced</div>
+                <div class="imag-animat-tab" data-tab="imag-animat-presets">Presets</div>
+            </div>
+            
+            <div class="imag-animat-tab-content imag-animat-active" id="imag-animat-basic">
+                <div class="imag-animat-control-group">
+                    <label for="imag-animat-frameDuration" class="imag-animat-label">Frame Duration (ms):</label>
+                    <input type="range" id="imag-animat-frameDuration" min="50" max="1000" value="200">
+                    <div class="imag-animat-controls">
+                        <input type="number" id="imag-animat-frameDurationValue" min="50" max="1000" value="200">
+                        <button id="imag-animat-applyDuration" class="imag-animat-btn">Apply to All</button>
+                    </div>
+                </div>
+                
+                <div class="imag-animat-control-group">
+                    <label class="imag-animat-label">Animation Effects:</label>
+                    <div class="imag-animat-controls">
+                        <select id="imag-animat-effectType">
+                            <option value="none">No Effect</option>
+                            <option value="fade">Fade Transition</option>
+                            <option value="slide">Slide In</option>
+                            <option value="scale">Scale Effect</option>
+                            <option value="rotate">Rotation</option>
+                            <option value="wobble">Wobble</option>
+                            <option value="hit">Hit Impact</option>
+                            <option value="blood">Blood Splatter</option>
+                        </select>
+                        <button id="imag-animat-addEffect" class="imag-animat-btn">Add Effect</button>
+                    </div>
+                </div>
+                
+                <div class="imag-animat-control-group">
+                    <label class="imag-animat-label">Frame Offset:</label>
+                    <div class="imag-animat-input-group">
+                        <div>
+                            <label class="imag-animat-label">X:</label>
+                            <input type="number" id="imag-animat-offsetX" value="0" min="-100" max="100">
+                        </div>
+                        <div>
+                            <label class="imag-animat-label">Y:</label>
+                            <input type="number" id="imag-animat-offsetY" value="0" min="-100" max="100">
+                        </div>
+                        <button id="imag-animat-applyOffset" class="imag-animat-btn" style="align-self: flex-end;">Apply</button>
+                    </div>
+                </div>
+                
+                <div class="imag-animat-control-group">
+                    <label class="imag-animat-label">Hit Point Position:</label>
+                    <div class="imag-animat-input-group">
+                        <div>
+                            <label class="imag-animat-label">X:</label>
+                            <input type="number" id="imag-animat-hitX" value="50" min="0" max="100">
+                        </div>
+                        <div>
+                            <label class="imag-animat-label">Y:</label>
+                            <input type="number" id="imag-animat-hitY" value="50" min="0" max="100">
+                        </div>
+                        <button id="imag-animat-placeHitPoint" class="imag-animat-btn imag-animat-btn-red" style="align-self: flex-end;">Place</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="imag-animat-tab-content" id="imag-animat-effects">
+                <div class="imag-animat-control-group">
+                    <label class="imag-animat-label">Halo Effect:</label>
+                    <div class="imag-animat-controls">
+                        <input type="file" id="imag-animat-haloInput" accept="image/*" style="color: transparent; width: auto;">
+                        <button id="imag-animat-positionHalo" class="imag-animat-btn">Position Halo</button>
+                    </div>
+                </div>
+                
+                <div class="imag-animat-control-group">
+                    <label for="imag-animat-blendMode" class="imag-animat-label">Blend Mode:</label>
+                    <select id="imag-animat-blendMode">
+                        <option value="normal">Normal</option>
+                        <option value="multiply">Multiply</option>
+                        <option value="screen">Screen</option>
+                        <option value="overlay">Overlay</option>
+                        <option value="darken">Darken</option>
+                        <option value="lighten">Lighten</option>
+                        <option value="color-dodge">Color Dodge</option>
+                        <option value="wesnoth-magic">Wesnoth Magic</option>
+                    </select>
+                </div>
+                
+                <div class="imag-animat-control-group">
+                    <label for="imag-animat-opacity" class="imag-animat-label">Opacity:</label>
+                    <input type="range" id="imag-animat-opacity" min="0" max="100" value="100">
+                    <div style="text-align: center;">
+                        <span id="imag-animat-opacityValue">100%</span>
+                    </div>
+                </div>
+                
+                <div class="imag-animat-control-group">
+                    <label class="imag-animat-label">Special Effects:</label>
+                    <div class="imag-animat-controls">
+                        <button id="imag-animat-addBlood" class="imag-animat-btn imag-animat-btn-red">Add Blood Splatter</button>
+                        <button id="imag-animat-addMagic" class="imag-animat-btn imag-animat-btn-purple">Add Magic Glow</button>
+                    </div>
+                </div>
+                
+                <!-- Predefined Halos Section -->
+                <div class="imag-animat-control-group">
+                    <label class="imag-animat-label">Predefined Halos:</label>
+                    <div class="imag-animat-controls">
+                        <button class="imag-animat-btn" data-halo="magic">Magic Halo</button>
+                        <button class="imag-animat-btn" data-halo="hit">Hit Halo</button>
+                        <button class="imag-animat-btn" data-halo="fire">Fire Halo</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="imag-animat-tab-content" id="imag-animat-advanced">
+                <div class="imag-animat-control-group">
+                    <label class="imag-animat-label">Color Adjustment:</label>
+                    <div class="imag-animat-color-adjustment">
+                        <div>
+                            <label for="imag-animat-hue" class="imag-animat-label">Hue:</label>
+                            <input type="range" id="imag-animat-hue" min="-180" max="180" value="0">
+                        </div>
+                        <div>
+                            <label for="imag-animat-saturation" class="imag-animat-label">Saturation:</label>
+                            <input type="range" id="imag-animat-saturation" min="0" max="200" value="100">
+                        </div>
+                        <div>
+                            <label for="imag-animat-brightness" class="imag-animat-label">Brightness:</label>
+                            <input type="range" id="imag-animat-brightness" min="0" max="200" value="100">
+                        </div>
+                        <div>
+                            <label for="imag-animat-contrast" class="imag-animat-label">Contrast:</label>
+                            <input type="range" id="imag-animat-contrast" min="0" max="200" value="100">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="imag-animat-control-group">
+                    <label for="imag-animat-textOverlay" class="imag-animat-label">Text Overlay:</label>
+                    <textarea id="imag-animat-textOverlay" placeholder="Enter damage text or special message" rows="2"></textarea>
+                </div>
+                
+                <div class="imag-animat-control-group">
+                    <label class="imag-animat-label">Frame Filters:</label>
+                    <div class="imag-animat-controls">
+                        <button id="imag-animat-applyGrayscale" class="imag-animat-btn">Grayscale</button>
+                        <button id="imag-animat-applySepia" class="imag-animat-btn">Sepia</button>
+                        <button id="imag-animat-applyInvert" class="imag-animat-btn">Invert</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="imag-animat-tab-content" id="imag-animat-presets">
+                <div class="imag-animat-control-group">
+                    <label class="imag-animat-label">Animation Type:</label>
+                    <select id="imag-animat-animationType">
+                        <option value="custom">Custom Animation</option>
+                        <option value="attack">Melee Attack</option>
+                        <option value="ranged">Ranged Attack</option>
+                        <option value="defend">Defend</option>
+                        <option value="death">Death</option>
+                        <option value="idle">Idle</option>
+                        <option value="victory">Victory</option>
+                        <option value="magic">Magic Cast</option>
+                    </select>
+                </div>
+                
+                <div class="imag-animat-preset-grid">
+                    <div class="imag-animat-preset" data-preset="attack">
+                        <h4>⚔️ Melee Attack</h4>
+                        <p>Forward lunge with weapon</p>
+                    </div>
+                    <div class="imag-animat-preset" data-preset="ranged">
+                        <h4>🏹 Ranged Attack</h4>
+                        <p>Bow draw and release</p>
+                    </div>
+                    <div class="imag-animat-preset" data-preset="defend">
+                        <h4>🛡️ Defend</h4>
+                        <p>Shield raise and impact</p>
+                    </div>
+                    <div class="imag-animat-preset" data-preset="death">
+                        <h4>💀 Death</h4>
+                        <p>Fall and fade out</p>
+                    </div>
+                    <div class="imag-animat-preset" data-preset="victory">
+                        <h4>🎉 Victory</h4>
+                        <p>Cheer and weapon raise</p>
+                    </div>
+                    <div class="imag-animat-preset" data-preset="magic">
+                        <h4>🔮 Magic Cast</h4>
+                        <p>Spell casting with glow</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="imag-animat-panel">
+            <div class="imag-animat-panel-title">
+                <h2><span>👁️</span> Animation Preview</h2>
+                <div class="imag-animat-controls">
+                    <button id="imag-animat-playBtn" class="imag-animat-btn imag-animat-btn-primary">▶ Play</button>
+                    <button id="imag-animat-pauseBtn" class="imag-animat-btn">⏸ Pause</button>
+                    <button id="imag-animat-stopBtn" class="imag-animat-btn">⏹ Stop</button>
+                </div>
+            </div>
+            
+            <div class="imag-animat-grid-toggle">
+                <input type="checkbox" id="imag-animat-gridToggle" checked>
+                <label for="imag-animat-gridToggle" class="imag-animat-label">Show Grid</label>
+            </div>
+            
+            <div class="imag-animat-controls">
+                <select id="imag-animat-loopOption">
+                    <option value="loop">Loop Animation</option>
+                    <option value="once">Play Once</option>
+                    <option value="bounce">Bounce (Reverse)</option>
+                    <option value="pingpong">Ping Pong</option>
+                </select>
+                <select id="imag-animat-direction">
+                    <option value="forward">Forward</option>
+                    <option value="reverse">Reverse</option>
+                    <option value="alternate">Alternate</option>
+                </select>
+            </div>
+            
+            <div class="imag-animat-preview-container">
+                <img id="imag-animat-animationPreview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='100%25' height='100%25' fill='%232d3e40'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='monospace' font-size='18' fill='%235a7d5a'%3EUpload unit sprites to preview animation%3C/text%3E%3C/svg%3E" alt="Animation Preview">
+                <img id="imag-animat-haloEffect" class="imag-animat-halo" style="display: none;" alt="Halo Effect">
+                <div class="imag-animat-grid-overlay" id="imag-animat-gridOverlay"></div>
+                <div class="imag-animat-hit-point" id="imag-animat-hitPoint" style="display: none;">
+                    <div class="imag-animat-hit-point-label">Hit Point</div>
+                </div>
+            </div>
+            
+            <div class="imag-animat-control-group imag-animat-control-group-full">
+                <label class="imag-animat-label">Preview Speed:</label>
+                <input type="range" id="imag-animat-previewSpeed" min="0.1" max="3" step="0.1" value="1">
+                <div style="text-align: center; margin-top: 5px;">
+                    <span>Slow</span>
+                    <span style="margin: 0 10px;">Speed: <span id="imag-animat-speedValue">1.0</span>x</span>
+                    <span>Fast</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="imag-animat-panel imag-animat-timeline">
+            <h2 class="imag-animat-panel-title">
+                <span>⏱️</span> Animation Timeline
+                <span style="font-size: 0.9rem; color: var(--imag-animat-wesnoth-light); margin-left: 10px;">Drag frames to reorder</span>
+            </h2>
+            <div class="imag-animat-timeline-container" id="imag-animat-timeline">
+                <div class="imag-animat-timeline-frame">
+                    <span class="imag-animat-frame-number">1</span>
+                    <span class="imag-animat-frame-duration">200ms</span>
+                </div>
+                <div class="imag-animat-timeline-frame">
+                    <span class="imag-animat-frame-number">2</span>
+                    <span class="imag-animat-frame-duration">200ms</span>
+                </div>
+            </div>
+            
+            <div class="imag-animat-controls" style="margin-top: 20px; flex-wrap: wrap;">
+                <button id="imag-animat-addFrame" class="imag-animat-btn">+ Add Frame</button>
+                <button id="imag-animat-removeFrame" class="imag-animat-btn">- Remove Frame</button>
+                <button id="imag-animat-duplicateFrame" class="imag-animat-btn">⎘ Duplicate</button>
+                <button id="imag-animat-reverseFrames" class="imag-animat-btn">⇆ Reverse Order</button>
+                
+                <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+                    <select id="imag-animat-exportFormat" class="imag-animat-export-select">
+                        <option value="gif">GIF Animation</option>
+                        <option value="spritesheet">Sprite Sheet</option>
+                        <option value="wml">WML Code</option>
+                    </select>
+                    <button id="imag-animat-exportBtn" class="imag-animat-btn imag-animat-btn-primary">Export</button>
+                </div>
+                
+                <button id="imag-animat-wmlBtn" class="imag-animat-btn imag-animat-btn-purple" style="margin-top: 10px;">Generate WML</button>
+            </div>
+            
+            <div class="imag-animat-progress-container" id="imag-animat-progressContainer">
+                <div class="imag-animat-progress-bar" id="imag-animat-progressBar"></div>
+            </div>
+            
+            <div class="imag-animat-wml-preview" id="imag-animat-wmlPreview">
+                <!-- WML code will appear here -->
+            </div>
+        </div>
+        
+        <div class="imag-animat-panel">
+            <h2 class="imag-animat-panel-title"><span>🔊</span> Sound Effects</h2>
+            <div class="imag-animat-control-group">
+                <div class="imag-animat-controls">
+                    <input type="file" id="imag-animat-soundInput" accept="audio/*" style="color: transparent; width: auto;">
+                    <button id="imag-animat-addSound" class="imag-animat-btn">Add Sound</button>
+                </div>
+            </div>
+            
+            <div class="imag-animat-sound-list" id="imag-animat-soundList">
+                <!-- Sound items will be added here -->
+            </div>
+            
+            <div class="imag-animat-control-group">
+                <label class="imag-animat-label">Assign Sound to Frame:</label>
+                <div class="imag-animat-controls">
+                    <select id="imag-animat-frameSelector">
+                        <option value="1">Frame 1</option>
+                        <option value="2">Frame 2</option>
+                    </select>
+                    <select id="imag-animat-soundSelector">
+                        <option value="">No sound</option>
+                    </select>
+                    <button id="imag-animat-assignSound" class="imag-animat-btn">Assign</button>
+                </div>
+            </div>
+            
+            <div class="imag-animat-control-group">
+                <label class="imag-animat-label">Sound Effects Library:</label>
+                <div class="imag-animat-controls">
+                    <button class="imag-animat-btn" data-sound="sword">Sword Swing</button>
+                    <button class="imag-animat-btn" data-sound="arrow">Arrow Fire</button>
+                    <button class="imag-animat-btn" data-sound="magic">Magic Cast</button>
+                    <button class="imag-animat-btn" data-sound="death">Death Cry</button>
+                    <button class="imag-animat-btn" data-sound="impact">Hit Impact</button>
+                </div>
+            </div>
+            
+            <!-- Volume control -->
+            <div class="imag-animat-control-group">
+                <label for="imag-animat-volume" class="imag-animat-label">Sound Volume:</label>
+                <div class="imag-animat-volume-control">
+                    <span>🔈</span>
+                    <input type="range" id="imag-animat-volume" class="imag-animat-volume-slider" min="0" max="100" value="80">
+                    <span>🔊</span>
+                    <span id="imag-animat-volumeValue">80%</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="imag-animat-status-bar">
+            <p>Ready to create Wesnoth animations. Upload your unit sprites to begin.</p>
+        </div>
+    </div>
+
+    <!-- External libraries for export functionality -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const dropZone = document.getElementById('imag-animat-dropZone');
+            const fileInput = document.getElementById('imag-animat-fileInput');
+            const frameDuration = document.getElementById('imag-animat-frameDuration');
+            const frameDurationValue = document.getElementById('imag-animat-frameDurationValue');
+            const applyDuration = document.getElementById('imag-animat-applyDuration');
+            const playBtn = document.getElementById('imag-animat-playBtn');
+            const pauseBtn = document.getElementById('imag-animat-pauseBtn');
+            const stopBtn = document.getElementById('imag-animat-stopBtn');
+            const previewSpeed = document.getElementById('imag-animat-previewSpeed');
+            const speedValue = document.getElementById('imag-animat-speedValue');
+            const animationPreview = document.getElementById('imag-animat-animationPreview');
+            const timeline = document.getElementById('imag-animat-timeline');
+            const addFrame = document.getElementById('imag-animat-addFrame');
+            const removeFrame = document.getElementById('imag-animat-removeFrame');
+            const duplicateFrame = document.getElementById('imag-animat-duplicateFrame');
+            const reverseFrames = document.getElementById('imag-animat-reverseFrames');
+            const exportBtn = document.getElementById('imag-animat-exportBtn');
+            const wmlBtn = document.getElementById('imag-animat-wmlBtn');
+            const wmlPreview = document.getElementById('imag-animat-wmlPreview');
+            const haloInput = document.getElementById('imag-animat-haloInput');
+            const haloEffect = document.getElementById('imag-animat-haloEffect');
+            const positionHalo = document.getElementById('imag-animat-positionHalo');
+            const tabs = document.querySelectorAll('.imag-animat-tab');
+            const tabContents = document.querySelectorAll('.imag-animat-tab-content');
+            const opacitySlider = document.getElementById('imag-animat-opacity');
+            const opacityValue = document.getElementById('imag-animat-opacityValue');
+            const clearBtn = document.getElementById('imag-animat-clearBtn');
+            const offsetX = document.getElementById('imag-animat-offsetX');
+            const offsetY = document.getElementById('imag-animat-offsetY');
+            const applyOffset = document.getElementById('imag-animat-applyOffset');
+            const soundInput = document.getElementById('imag-animat-soundInput');
+            const addSoundBtn = document.getElementById('imag-animat-addSound');
+            const soundList = document.getElementById('imag-animat-soundList');
+            const frameSelector = document.getElementById('imag-animat-frameSelector');
+            const soundSelector = document.getElementById('imag-animat-soundSelector');
+            const assignSoundBtn = document.getElementById('imag-animat-assignSound');
+            const gridToggle = document.getElementById('imag-animat-gridToggle');
+            const gridOverlay = document.getElementById('imag-animat-gridOverlay');
+            const hitPoint = document.getElementById('imag-animat-hitPoint');
+            const hitX = document.getElementById('imag-animat-hitX');
+            const hitY = document.getElementById('imag-animat-hitY');
+            const placeHitPoint = document.getElementById('imag-animat-placeHitPoint');
+            const presets = document.querySelectorAll('.imag-animat-preset');
+            const animationType = document.getElementById('imag-animat-animationType');
+            const volumeSlider = document.getElementById('imag-animat-volume');
+            const volumeValue = document.getElementById('imag-animat-volumeValue');
+            const progressContainer = document.getElementById('imag-animat-progressContainer');
+            const progressBar = document.getElementById('imag-animat-progressBar');
+            const exportFormat = document.getElementById('imag-animat-exportFormat');
+            
+            // Asset paths (relative to HTML file)
+            const ASSETS_PATH = '';
+            const HALOS_PATH = ASSETS_PATH + 'halos/';
+            const SOUNDS_PATH = ASSETS_PATH + 'sounds/';
+            
+            // Predefined assets
+            const predefinedAssets = {
+                halos: {
+                    magic: HALOS_PATH + 'mage-halo1.png',
+                    hit: HALOS_PATH + 'flame-burst-1.png',
+                    fire: HALOS_PATH + 'fireball-impact-2.png'
+                },
+                sounds: {
+                    sword: SOUNDS_PATH + 'sword-1.ogg',
+                    arrow: SOUNDS_PATH + 'arrow.mp3',
+                    magic: SOUNDS_PATH + 'magic-holy-1.ogg',
+                    death: SOUNDS_PATH + 'human-die-1.ogg',
+                    impact: SOUNDS_PATH + 'flail.ogg'
+                }
+            };
+            
+            // State
+            let uploadedImages = [];
+            let currentFrame = 0;
+            let animationInterval = null;
+            let isPlaying = false;
+            let frameTimes = [200, 200]; // Default frame times
+            let soundEffects = [];
+            let frameSounds = {};
+            let frameProperties = [];
+            let isDragging = false;
+            let dragSrcIndex = null;
+            let animationTimeout = null;
+            let audioContext = null;
+            let audioBuffers = {};
+            let volume = 0.8; // Default volume (80%)
+            
+            // Initialize frame properties
+            function initFrameProperties() {
+                frameProperties = frameTimes.map(() => ({
+                    offsetX: 0,
+                    offsetY: 0,
+                    blendMode: 'normal',
+                    opacity: 1,
+                    hue: 0,
+                    saturation: 100,
+                    brightness: 100,
+                    contrast: 100,
+                    text: '',
+                    sound: null,
+                    hitPoint: { x: 50, y: 50 }
+                }));
+            }
+            
+            initFrameProperties();
+            
+            // Setup tab switching
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    
+                    // Update tabs
+                    tabs.forEach(t => t.classList.remove('imag-animat-active'));
+                    tab.classList.add('imag-animat-active');
+                    
+                    // Update content
+                    tabContents.forEach(content => {
+                        content.classList.remove('imag-animat-active');
+                        if (content.id === tabId) {
+                            content.classList.add('imag-animat-active');
+                        }
+                    });
+                });
+            });
+            
+            // Setup event listeners
+            dropZone.addEventListener('click', () => fileInput.click());
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.style.backgroundColor = 'rgba(82, 121, 111, 0.4)';
+            });
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.style.backgroundColor = 'rgba(52, 78, 65, 0.2)';
+            });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.style.backgroundColor = 'rgba(52, 78, 65, 0.2)';
+                handleFiles(e.dataTransfer.files);
+            });
+            
+            fileInput.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+            
+            frameDuration.addEventListener('input', () => {
+                frameDurationValue.value = frameDuration.value;
+            });
+            
+            frameDurationValue.addEventListener('input', () => {
+                const value = Math.min(1000, Math.max(50, parseInt(frameDurationValue.value) || 200));
+                frameDuration.value = value;
+                frameDurationValue.value = value;
+            });
+            
+            applyDuration.addEventListener('click', () => {
+                const duration = parseInt(frameDurationValue.value);
+                frameTimes = frameTimes.map(() => duration);
+                updateTimeline();
+            });
+            
+            previewSpeed.addEventListener('input', () => {
+                speedValue.textContent = previewSpeed.value;
+            });
+            
+            opacitySlider.addEventListener('input', () => {
+                opacityValue.textContent = `${opacitySlider.value}%`;
+                applyOpacityToFrame();
+            });
+            
+            playBtn.addEventListener('click', playAnimation);
+            pauseBtn.addEventListener('click', pauseAnimation);
+            stopBtn.addEventListener('click', stopAnimation);
+            
+            addFrame.addEventListener('click', () => {
+                frameTimes.push(parseInt(frameDurationValue.value));
+                frameProperties.push({
+                    offsetX: 0,
+                    offsetY: 0,
+                    blendMode: 'normal',
+                    opacity: 1,
+                    hue: 0,
+                    saturation: 100,
+                    brightness: 100,
+                    contrast: 100,
+                    text: '',
+                    sound: null,
+                    hitPoint: { x: 50, y: 50 }
+                });
+                updateTimeline();
+                updateFrameSelector();
+            });
+            
+            duplicateFrame.addEventListener('click', () => {
+                if (currentFrame < frameTimes.length) {
+                    frameTimes.splice(currentFrame + 1, 0, frameTimes[currentFrame]);
+                    frameProperties.splice(currentFrame + 1, 0, {...frameProperties[currentFrame]});
+                    updateTimeline();
+                    updateFrameSelector();
+                    currentFrame++;
+                    updatePreview();
+                }
+            });
+            
+            removeFrame.addEventListener('click', () => {
+                if (frameTimes.length > 1) {
+                    frameTimes.splice(currentFrame, 1);
+                    frameProperties.splice(currentFrame, 1);
+                    if (currentFrame >= frameTimes.length) currentFrame = frameTimes.length - 1;
+                    updateTimeline();
+                    updateFrameSelector();
+                    updatePreview();
+                }
+            });
+            
+            reverseFrames.addEventListener('click', () => {
+                frameTimes.reverse();
+                uploadedImages.reverse();
+                frameProperties.reverse();
+                updateTimeline();
+            });
+            
+            haloInput.addEventListener('change', (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        haloEffect.src = event.target.result;
+                        haloEffect.style.display = 'block';
+                    };
+                    reader.readAsDataURL(e.target.files[0]);
+                }
+            });
+            
+            positionHalo.addEventListener('click', () => {
+                const offsetX = Math.floor(Math.random() * 50) - 25;
+                const offsetY = Math.floor(Math.random() * 50) - 25;
+                haloEffect.style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`;
+            });
+            
+            clearBtn.addEventListener('click', () => {
+                uploadedImages = [];
+                frameTimes = [200, 200];
+                initFrameProperties();
+                updateTimeline();
+                updatePreview();
+                haloEffect.style.display = 'none';
+                hitPoint.style.display = 'none';
+                document.querySelector('.imag-animat-status-bar p').textContent = 
+                    "All images cleared. Ready to upload new images.";
+                stopAnimation();
+            });
+            
+            applyOffset.addEventListener('click', () => {
+                if (currentFrame < frameProperties.length) {
+                    frameProperties[currentFrame].offsetX = parseInt(offsetX.value) || 0;
+                    frameProperties[currentFrame].offsetY = parseInt(offsetY.value) || 0;
+                    updatePreview();
+                }
+            });
+            
+            gridToggle.addEventListener('change', () => {
+                gridOverlay.style.display = gridToggle.checked ? 'block' : 'none';
+            });
+            
+            placeHitPoint.addEventListener('click', () => {
+                hitPoint.style.display = 'block';
+                const x = parseInt(hitX.value) || 50;
+                const y = parseInt(hitY.value) || 50;
+                hitPoint.style.left = `${x}%`;
+                hitPoint.style.top = `${y}%`;
+                
+                if (currentFrame < frameProperties.length) {
+                    frameProperties[currentFrame].hitPoint = { x, y };
+                }
+            });
+            
+            presets.forEach(preset => {
+                preset.addEventListener('click', () => {
+                    const presetType = preset.getAttribute('data-preset');
+                    applyPreset(presetType);
+                });
+            });
+            
+            animationType.addEventListener('change', () => {
+                if (animationType.value !== 'custom') {
+                    applyPreset(animationType.value);
+                }
+            });
+            
+            wmlBtn.addEventListener('click', generateWML);
+            
+            exportBtn.addEventListener('click', async () => {
+                const format = exportFormat.value;
+                
+                if (uploadedImages.length === 0) {
+                    document.querySelector('.imag-animat-status-bar p').textContent = 
+                        "Upload images first before exporting.";
+                    return;
+                }
+                
+                progressContainer.style.display = 'block';
+                progressBar.style.width = '0%';
+                
+                try {
+                    if (format === 'gif') {
+                        await exportGIF();
+                    } else if (format === 'spritesheet') {
+                        await exportSpriteSheet();
+                    } else if (format === 'wml') {
+                        generateWML();
+                    }
+                } catch (e) {
+                    console.error('Export failed:', e);
+                    document.querySelector('.imag-animat-status-bar p').textContent = 
+                        "Export failed: " + e.message;
+                } finally {
+                    setTimeout(() => {
+                        progressContainer.style.display = 'none';
+                    }, 2000);
+                }
+            });
+            
+            // Volume control
+            volumeSlider.addEventListener('input', () => {
+                volume = parseInt(volumeSlider.value) / 100;
+                volumeValue.textContent = `${parseInt(volumeSlider.value)}%`;
+            });
+            
+            // Predefined halo buttons
+            document.querySelectorAll('[data-halo]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const haloType = button.getAttribute('data-halo');
+                    if (predefinedAssets.halos[haloType]) {
+                        haloEffect.src = predefinedAssets.halos[haloType];
+                        haloEffect.style.display = 'block';
+                        document.querySelector('.imag-animat-status-bar p').textContent = 
+                            `Loaded "${haloType}" halo. Drag to reposition.`;
+                    }
+                });
+            });
+            
+            // Predefined sound buttons
+            document.querySelectorAll('[data-sound]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const soundType = button.getAttribute('data-sound');
+                    if (predefinedAssets.sounds[soundType]) {
+                        const soundUrl = predefinedAssets.sounds[soundType];
+                        const soundName = soundType.charAt(0).toUpperCase() + soundType.slice(1);
+                        
+                        // Check if already exists
+                        if (soundEffects.some(s => s.name === soundName)) {
+                            document.querySelector('.imag-animat-status-bar p').textContent = 
+                                `Sound "${soundName}" already added.`;
+                            return;
+                        }
+                        
+                        // Add to soundEffects array
+                        soundEffects.push({
+                            name: soundName,
+                            url: soundUrl
+                        });
+                        
+                        // Preload the audio
+                        preloadAudio(soundUrl, soundName);
+                        
+                        // Add to UI list
+                        const soundItem = document.createElement('div');
+                        soundItem.className = 'imag-animat-sound-item';
+                        soundItem.innerHTML = `
+                            <span>${soundName}</span>
+                            <div class="imag-animat-sound-controls">
+                                <button class="imag-animat-btn imag-animat-btn-blue play-sound">▶</button>
+                                <button class="imag-animat-btn imag-animat-btn-red remove-sound">✕</button>
+                            </div>
+                        `;
+                        
+                        soundList.appendChild(soundItem);
+                        
+                        // Add to sound selector
+                        const option = document.createElement('option');
+                        option.value = soundName;
+                        option.textContent = soundName;
+                        soundSelector.appendChild(option);
+                        
+                        // Add event listeners to new buttons
+                        soundItem.querySelector('.play-sound').addEventListener('click', () => {
+                            playSound(soundName);
+                        });
+                        
+                        soundItem.querySelector('.remove-sound').addEventListener('click', () => {
+                            soundList.removeChild(soundItem);
+                            // Remove from soundEffects array
+                            soundEffects = soundEffects.filter(s => s.name !== soundName);
+                            // Remove from audio buffers
+                            delete audioBuffers[soundName];
+                            // Remove from sound selector
+                            const optionToRemove = Array.from(soundSelector.options).find(opt => opt.value === soundName);
+                            if (optionToRemove) {
+                                soundSelector.removeChild(optionToRemove);
+                            }
+                        });
+                        
+                        document.querySelector('.imag-animat-status-bar p').textContent = 
+                            `Sound "${soundName}" added.`;
+                    }
+                });
+            });
+            
+            // Initialize audio context
+            function initAudio() {
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.error('Web Audio API not supported:', e);
+                    document.querySelector('.imag-animat-status-bar p').textContent = 
+                        "Web Audio API not supported. Sound effects disabled.";
+                }
+            }
+            
+            // Preload audio buffer
+            async function preloadAudio(url, name) {
+                if (!audioContext) return;
+                
+                try {
+                    const response = await fetch(url);
+                    const arrayBuffer = await response.arrayBuffer();
+                    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                    audioBuffers[name] = audioBuffer;
+                } catch (e) {
+                    console.error('Error loading audio:', e);
+                }
+            }
+            
+            // Play sound by name
+            function playSound(name) {
+                if (!audioContext || !audioBuffers[name]) return;
+                
+                try {
+                    const source = audioContext.createBufferSource();
+                    const gainNode = audioContext.createGain();
+                    
+                    source.buffer = audioBuffers[name];
+                    gainNode.gain.value = volume;
+                    
+                    source.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    source.start(0);
+                } catch (e) {
+                    console.error('Error playing sound:', e);
+                }
+            }
+            
+            // Sound management
+            addSoundBtn.addEventListener('click', () => {
+                if (soundInput.files && soundInput.files[0]) {
+                    const file = soundInput.files[0];
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(event) {
+                        const soundName = file.name;
+                        const soundUrl = event.target.result;
+                        
+                        // Add to soundEffects array
+                        soundEffects.push({
+                            name: soundName,
+                            url: soundUrl
+                        });
+                        
+                        // Preload the audio
+                        preloadAudio(soundUrl, soundName);
+                        
+                        // Add to UI list
+                        const soundItem = document.createElement('div');
+                        soundItem.className = 'imag-animat-sound-item';
+                        soundItem.innerHTML = `
+                            <span>${soundName}</span>
+                            <div class="imag-animat-sound-controls">
+                                <button class="imag-animat-btn imag-animat-btn-blue play-sound">▶</button>
+                                <button class="imag-animat-btn imag-animat-btn-red remove-sound">✕</button>
+                            </div>
+                        `;
+                        
+                        soundList.appendChild(soundItem);
+                        
+                        // Add to sound selector
+                        const option = document.createElement('option');
+                        option.value = soundName;
+                        option.textContent = soundName;
+                        soundSelector.appendChild(option);
+                        
+                        // Add event listeners to new buttons
+                        soundItem.querySelector('.play-sound').addEventListener('click', () => {
+                            playSound(soundName);
+                        });
+                        
+                        soundItem.querySelector('.remove-sound').addEventListener('click', () => {
+                            soundList.removeChild(soundItem);
+                            // Remove from soundEffects array
+                            soundEffects = soundEffects.filter(s => s.name !== soundName);
+                            // Remove from audio buffers
+                            delete audioBuffers[soundName];
+                            // Remove from sound selector
+                            const optionToRemove = Array.from(soundSelector.options).find(opt => opt.value === soundName);
+                            if (optionToRemove) {
+                                soundSelector.removeChild(optionToRemove);
+                            }
+                        });
+                    };
+                    
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            assignSoundBtn.addEventListener('click', () => {
+                const frameIndex = parseInt(frameSelector.value) - 1;
+                const soundName = soundSelector.value;
+                
+                if (frameIndex >= 0 && frameIndex < frameProperties.length) {
+                    frameProperties[frameIndex].sound = soundName || null;
+                    
+                    if (soundName) {
+                        document.querySelector('.imag-animat-status-bar p').textContent = 
+                            `Sound "${soundName}" assigned to frame ${frameIndex + 1}`;
+                    } else {
+                        document.querySelector('.imag-animat-status-bar p').textContent = 
+                            `Sound removed from frame ${frameIndex + 1}`;
+                    }
+                }
+            });
+            
+            // Export functions
+            async function exportGIF() {
+                document.querySelector('.imag-animat-status-bar p').textContent = 
+                    "Generating GIF animation...";
+                
+                // Create GIF instance
+                const gif = new GIF({
+                    workers: 2,
+                    quality: 10,
+                    width: 72,
+                    height: 72,
+                    workerScript: 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js'
+                });
+
+                // Error handling
+                gif.on('abort', function() {
+                    console.error('GIF rendering aborted');
+                    document.querySelector('.imag-animat-status-bar p').textContent = 
+                        "GIF rendering aborted. Please try again.";
+                });
+
+                gif.on('error', function(e) {
+                    console.error('GIF rendering error:', e);
+                    document.querySelector('.imag-animat-status-bar p').textContent = 
+                        "GIF rendering error: " + e.message;
+                });
+                
+                // Create canvas for each frame
+                for (let i = 0; i < uploadedImages.length; i++) {
+                    const img = await loadImage(uploadedImages[i]);
+                    
+                    // Create canvas to draw the frame
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 72;
+                    canvas.height = 72;
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Draw image on canvas
+                    ctx.drawImage(img, 0, 0, 72, 72);
+                    
+                    // Add frame to GIF
+                    gif.addFrame(canvas, {
+                        delay: frameTimes[i],
+                        copy: true
+                    });
+                    
+                    // Update progress
+                    progressBar.style.width = `${((i + 1) / uploadedImages.length) * 100}%`;
+                }
+                
+                // Render GIF
+                gif.on('finished', function(blob) {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'wesnoth_animation.gif';
+                    a.click();
+                    
+                    document.querySelector('.imag-animat-status-bar p').textContent = 
+                        "GIF animation downloaded successfully!";
+                });
+                
+                gif.render();
+            }
+            
+            async function exportSpriteSheet() {
+                document.querySelector('.imag-animat-status-bar p').textContent = 
+                    "Generating sprite sheet...";
+                
+                // Load all images
+                const images = [];
+                for (const src of uploadedImages) {
+                    const img = await loadImage(src);
+                    images.push(img);
+                }
+                
+                // Calculate sprite sheet dimensions
+                const frameWidth = images[0].width;
+                const frameHeight = images[0].height;
+                const spriteWidth = frameWidth * images.length;
+                const spriteHeight = frameHeight;
+                
+                // Create canvas for sprite sheet
+                const canvas = document.createElement('canvas');
+                canvas.width = spriteWidth;
+                canvas.height = spriteHeight;
+                const ctx = canvas.getContext('2d');
+                
+                // Draw all frames on the sprite sheet
+                for (let i = 0; i < images.length; i++) {
+                    ctx.drawImage(images[i], i * frameWidth, 0);
+                    progressBar.style.width = `${((i + 1) / images.length) * 100}%`;
+                }
+                
+                // Convert to data URL and download
+                canvas.toBlob(function(blob) {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'wesnoth_spritesheet.png';
+                    a.click();
+                    
+                    document.querySelector('.imag-animat-status-bar p').textContent = 
+                        "Sprite sheet downloaded successfully!";
+                });
+            }
+            
+            function loadImage(src) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = reject;
+                    img.src = src;
+                });
+            }
+            
+            // Functions
+            function handleFiles(files) {
+                uploadedImages = [];
+                for (let i = 0; i < Math.min(files.length, 20); i++) {
+                    const file = files[i];
+                    if (!file.type.match('image.*')) continue;
+                    
+                    const reader = new FileReader();
+                    reader.onload = (function(file) {
+                        return function(e) {
+                            uploadedImages.push(e.target.result);
+                            if (uploadedImages.length === Math.min(files.length, 20)) {
+                                // Adjust frameTimes to match the number of uploaded images
+                                if (frameTimes.length < uploadedImages.length) {
+                                    const diff = uploadedImages.length - frameTimes.length;
+                                    for (let j = 0; j < diff; j++) {
+                                        frameTimes.push(parseInt(frameDurationValue.value));
+                                        frameProperties.push({
+                                            offsetX: 0,
+                                            offsetY: 0,
+                                            blendMode: 'normal',
+                                            opacity: 1,
+                                            hue: 0,
+                                            saturation: 100,
+                                            brightness: 100,
+                                            contrast: 100,
+                                            text: '',
+                                            sound: null,
+                                            hitPoint: { x: 50, y: 50 }
+                                        });
+                                    }
+                                }
+                                updateTimeline();
+                                updatePreview();
+                                updateFrameSelector();
+                                hitPoint.style.display = 'block';
+                            }
+                        };
+                    })(file);
+                    reader.readAsDataURL(file);
+                }
+                
+                document.querySelector('.imag-animat-status-bar p').textContent = 
+                    `Loaded ${Math.min(files.length, 20)} images. Drag frames to reorder.`;
+            }
+            
+            function updateFrameSelector() {
+                frameSelector.innerHTML = '';
+                for (let i = 1; i <= frameTimes.length; i++) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = `Frame ${i}`;
+                    frameSelector.appendChild(option);
+                }
+            }
+            
+            function updateTimeline() {
+                timeline.innerHTML = '';
+                frameTimes.forEach((time, index) => {
+                    const frame = document.createElement('div');
+                    frame.className = 'imag-animat-timeline-frame';
+                    frame.draggable = true;
+                    frame.dataset.index = index;
+                    
+                    if (index === currentFrame && isPlaying) {
+                        frame.classList.add('imag-animat-active');
+                    }
+                    
+                    if (index === currentFrame) {
+                        frame.classList.add('imag-animat-selected');
+                    }
+                    
+                    const frameNumber = document.createElement('span');
+                    frameNumber.className = 'imag-animat-frame-number';
+                    frameNumber.textContent = index + 1;
+                    
+                    const frameDuration = document.createElement('span');
+                    frameDuration.className = 'imag-animat-frame-duration';
+                    frameDuration.textContent = `${time}ms`;
+                    
+                    frame.appendChild(frameNumber);
+                    frame.appendChild(frameDuration);
+                    
+                    if (uploadedImages[index]) {
+                        const img = document.createElement('img');
+                        img.src = uploadedImages[index];
+                        img.style.width = '100%';
+                        img.style.height = '100%';
+                        img.style.objectFit = 'cover';
+                        frame.appendChild(img);
+                    } else {
+                        frame.textContent = `Frame ${index + 1}`;
+                        frame.style.fontSize = '12px';
+                        frame.style.padding = '5px';
+                    }
+                    
+                    // Add drag events
+                    frame.addEventListener('dragstart', (e) => {
+                        isDragging = true;
+                        dragSrcIndex = index;
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/html', frame.innerHTML);
+                        frame.classList.add('imag-animat-dragging');
+                    });
+                    
+                    frame.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        return false;
+                    });
+                    
+                    frame.addEventListener('dragenter', (e) => {
+                        frame.classList.add('imag-animat-over');
+                    });
+                    
+                    frame.addEventListener('dragleave', () => {
+                        frame.classList.remove('imag-animat-over');
+                    });
+                    
+                    frame.addEventListener('drop', (e) => {
+                        e.stopPropagation();
+                        if (dragSrcIndex !== index) {
+                            // Reorder items
+                            [uploadedImages[dragSrcIndex], uploadedImages[index]] = [uploadedImages[index], uploadedImages[dragSrcIndex]];
+                            [frameTimes[dragSrcIndex], frameTimes[index]] = [frameTimes[index], frameTimes[dragSrcIndex]];
+                            [frameProperties[dragSrcIndex], frameProperties[index]] = [frameProperties[index], frameProperties[dragSrcIndex]];
+                            updateTimeline();
+                        }
+                        frame.classList.remove('imag-animat-over');
+                        return false;
+                    });
+                    
+                    frame.addEventListener('dragend', () => {
+                        isDragging = false;
+                        document.querySelectorAll('.imag-animat-timeline-frame').forEach(f => {
+                            f.classList.remove('imag-animat-over', 'imag-animat-dragging');
+                        });
+                    });
+                    
+                    // Add click event to select frame
+                    frame.addEventListener('click', () => {
+                        document.querySelectorAll('.imag-animat-timeline-frame').forEach(f => {
+                            f.classList.remove('imag-animat-selected');
+                        });
+                        frame.classList.add('imag-animat-selected');
+                        currentFrame = index;
+                        updatePreview();
+                        updateFramePropertiesUI();
+                    });
+                    
+                    timeline.appendChild(frame);
+                });
+            }
+            
+            function updateFramePropertiesUI() {
+                if (currentFrame < frameProperties.length) {
+                    const props = frameProperties[currentFrame];
+                    offsetX.value = props.offsetX;
+                    offsetY.value = props.offsetY;
+                    opacitySlider.value = props.opacity * 100;
+                    opacityValue.textContent = `${props.opacity * 100}%`;
+                    hitX.value = props.hitPoint.x;
+                    hitY.value = props.hitPoint.y;
+                    hitPoint.style.left = `${props.hitPoint.x}%`;
+                    hitPoint.style.top = `${props.hitPoint.y}%`;
+                }
+            }
+            
+            function applyOpacityToFrame() {
+                if (currentFrame < frameProperties.length) {
+                    frameProperties[currentFrame].opacity = opacitySlider.value / 100;
+                    animationPreview.style.opacity = frameProperties[currentFrame].opacity;
+                }
+            }
+            
+            function updatePreview() {
+                if (uploadedImages.length > 0 && currentFrame < uploadedImages.length) {
+                    animationPreview.src = uploadedImages[currentFrame];
+                    
+                    // Apply frame properties
+                    if (currentFrame < frameProperties.length) {
+                        const props = frameProperties[currentFrame];
+                        animationPreview.style.transform = `translate(${props.offsetX}px, ${props.offsetY}px)`;
+                        animationPreview.style.opacity = props.opacity;
+                        hitPoint.style.left = `${props.hitPoint.x}%`;
+                        hitPoint.style.top = `${props.hitPoint.y}%`;
+                    }
+                }
+            }
+            
+            // Animation playback system
+            function playAnimation() {
+                if (uploadedImages.length === 0 || isPlaying) return;
+                
+                isPlaying = true;
+                playBtn.disabled = true;
+                pauseBtn.disabled = false;
+                stopBtn.disabled = false;
+                
+                const loopOption = document.getElementById('imag-animat-loopOption').value;
+                const direction = document.getElementById('imag-animat-direction').value;
+                const speed = parseFloat(previewSpeed.value);
+                
+                animateFrames(0, 'forward', loopOption, direction, speed);
+            }
+            
+            function animateFrames(frameIndex, currentDirection, loopOption, direction, speed) {
+                if (!isPlaying) return;
+                
+                updateFrame(frameIndex);
+                
+                const nextFrame = getNextFrame(frameIndex, currentDirection, loopOption, direction);
+                if (nextFrame === null) {
+                    stopAnimation();
+                    return;
+                }
+                
+                const frameTime = frameTimes[frameIndex] / speed;
+                animationTimeout = setTimeout(() => {
+                    animateFrames(nextFrame.index, nextFrame.direction, loopOption, direction, speed);
+                }, frameTime);
+            }
+            
+            function getNextFrame(currentIndex, currentDirection, loopOption, directionSetting) {
+                let nextIndex = currentIndex;
+                let nextDirection = currentDirection;
+                
+                if (directionSetting === 'reverse') {
+                    nextIndex--;
+                    if (nextIndex < 0) {
+                        if (loopOption === 'loop') {
+                            nextIndex = uploadedImages.length - 1;
+                        } else {
+                            return null;
+                        }
+                    }
+                } else {
+                    if (currentDirection === 'forward') {
+                        nextIndex++;
+                    } else {
+                        nextIndex--;
+                    }
+                    
+                    if (nextIndex >= uploadedImages.length) {
+                        if (loopOption === 'loop') {
+                            nextIndex = 0;
+                        } else if (loopOption === 'bounce' || loopOption === 'pingpong') {
+                            nextDirection = 'reverse';
+                            nextIndex = uploadedImages.length - 2;
+                        } else {
+                            return null;
+                        }
+                    } else if (nextIndex < 0) {
+                        if (loopOption === 'pingpong') {
+                            nextDirection = 'forward';
+                            nextIndex = 1;
+                        } else {
+                            return null;
+                        }
+                    }
+                }
+                
+                return { index: nextIndex, direction: nextDirection };
+            }
+            
+            function updateFrame(index) {
+                currentFrame = index;
+                if (uploadedImages[index]) {
+                    animationPreview.src = uploadedImages[index];
+                    
+                    // Apply frame properties
+                    if (index < frameProperties.length) {
+                        const props = frameProperties[index];
+                        animationPreview.style.transform = `translate(${props.offsetX}px, ${props.offsetY}px)`;
+                        animationPreview.style.opacity = props.opacity;
+                        hitPoint.style.left = `${props.hitPoint.x}%`;
+                        hitPoint.style.top = `${props.hitPoint.y}%`;
+                        
+                        // Play sound if assigned
+                        if (props.sound) {
+                            playSound(props.sound);
+                        }
+                    }
+                }
+                
+                // Update timeline
+                document.querySelectorAll('.imag-animat-timeline-frame').forEach((frame, i) => {
+                    frame.classList.remove('imag-animat-active');
+                    if (i === index) {
+                        frame.classList.add('imag-animat-active');
+                    }
+                });
+            }
+            
+            function pauseAnimation() {
+                if (!isPlaying) return;
+                
+                clearTimeout(animationTimeout);
+                isPlaying = false;
+                playBtn.disabled = false;
+                pauseBtn.disabled = true;
+            }
+            
+            function stopAnimation() {
+                clearTimeout(animationTimeout);
+                isPlaying = false;
+                currentFrame = 0;
+                updatePreview();
+                updateTimeline();
+                playBtn.disabled = false;
+                pauseBtn.disabled = true;
+                stopBtn.disabled = true;
+            }
+            
+            function applyPreset(presetType) {
+                // Reset to default
+                frameTimes = [200, 200, 200, 200];
+                initFrameProperties();
+                
+                switch(presetType) {
+                    case 'attack':
+                        frameProperties[0].offsetX = -10;
+                        frameProperties[1].offsetX = 15;
+                        frameProperties[2].offsetX = 5;
+                        frameProperties[3].offsetX = 0;
+                        frameTimes = [150, 100, 150, 200];
+                        document.querySelector('.imag-animat-status-bar p').textContent = 
+                            "Melee attack preset applied: Forward lunge with weapon";
+                        break;
+                    case 'ranged':
+                        frameProperties[1].offsetY = -5;
+                        frameProperties[2].offsetY = 0;
+                        frameTimes = [200, 300, 150, 250];
+                        document.querySelector('.imag-animat-status-bar p').textContent = 
+                            "Ranged attack preset applied: Bow draw and release";
+                        break;
+                    case 'defend':
+                        frameProperties[1].offsetX = -5;
+                        frameProperties[2].offsetX = 10;
+                        frameTimes = [200, 100, 200, 300];
+                        document.querySelector('.imag-animat-status-bar p').textContent = 
+                            "Defend preset applied: Shield raise and impact";
+                        break;
+                    case 'death':
+                        frameProperties[2].offsetY = 20;
+                        frameProperties[3].opacity = 0.3;
+                        frameTimes = [250, 250, 350, 500];
+                        document.querySelector('.imag-animat-status-bar p').textContent = 
+                            "Death preset applied: Fall and fade out";
+                        break;
+                    case 'victory':
+                        frameProperties[1].offsetY = -10;
+                        frameProperties[2].offsetY = 0;
+                        frameProperties[3].offsetY = -5;
+                        frameTimes = [300, 200, 200, 300];
+                        document.querySelector('.imag-animat-status-bar p').textContent = 
+                            "Victory preset applied: Cheer and weapon raise";
+                        break;
+                    case 'magic':
+                        frameProperties[1].offsetX = 5;
+                        frameProperties[2].offsetX = -5;
+                        frameTimes = [300, 200, 200, 300];
+                        document.querySelector('.imag-animat-status-bar p').textContent = 
+                            "Magic cast preset applied: Spell casting with glow";
+                        break;
+                }
+                
+                updateTimeline();
+                updatePreview();
+                updateFrameSelector();
+            }
+            
+            function generateWML() {
+                if (uploadedImages.length === 0) {
+                    wmlPreview.textContent = "Upload images first to generate WML code";
+                    wmlPreview.style.display = 'block';
+                    return;
+                }
+                
+                let wmlCode = `[animation]\n`;
+                wmlCode += `    id=${animationType.value || "custom"}_animation\n`;
+                wmlCode += `    image="your_unit_image.png" # Replace with actual image path\n\n`;
+                
+                wmlCode += `    # Frame definitions\n`;
+                frameTimes.forEach((time, index) => {
+                    wmlCode += `    [frame]\n`;
+                    wmlCode += `        duration=${time}\n`;
+                    if (frameProperties[index].offsetX !== 0 || frameProperties[index].offsetY !== 0) {
+                        wmlCode += `        offset_x=${frameProperties[index].offsetX}\n`;
+                        wmlCode += `        offset_y=${frameProperties[index].offsetY}\n`;
+                    }
+                    if (frameProperties[index].hitPoint) {
+                        wmlCode += `        hit_x=${frameProperties[index].hitPoint.x}\n`;
+                        wmlCode += `        hit_y=${frameProperties[index].hitPoint.y}\n`;
+                    }
+                    if (frameProperties[index].sound) {
+                        wmlCode += `        sound="${frameProperties[index].sound}"\n`;
+                    }
+                    wmlCode += `    [/frame]\n`;
+                });
+                
+                wmlCode += `[/animation]`;
+                
+                wmlPreview.textContent = wmlCode;
+                wmlPreview.style.display = 'block';
+                document.querySelector('.imag-animat-status-bar p').textContent = 
+                    "WML code generated. Copy and use in your Wesnoth unit files.";
+            }
+            
+            // Initialize the timeline and grid
+            initAudio();
+            updateTimeline();
+            updateFrameSelector();
+            gridOverlay.style.display = 'block';
+        });
+    </script>
+</body>
+</html>

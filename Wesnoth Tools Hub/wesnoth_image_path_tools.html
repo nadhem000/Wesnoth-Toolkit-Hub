@@ -47,10 +47,10 @@
 			<div class="imag-tools-controls">
 				<button class="imag-tools-btn imag-tools-btn-add" id="imag-tools-choose-directory">Add Directory</button>
 			</div>
-<div class="imag-tools-directories-container" id="imag-tools-directories-container">
-    <h3>Loaded Directories</h3>
-    <div class="imag-tools-empty-state">No directories loaded</div>
-</div>
+			<div class="imag-tools-directories-container" id="imag-tools-directories-container">
+				<h3>Loaded Directories</h3>
+				<div class="imag-tools-empty-state">No directories loaded</div>
+			</div>
 			<div id="imag-tools-images-display" class="imag-tools-images-container">
 				<div class="imag-tools-empty-state">
 					<h3>No images loaded yet</h3>
@@ -142,6 +142,9 @@
 						<div id="imag-tools-function-details-container">
 							<!-- Details will appear here when a function is selected -->
 						</div>
+						<div id="imag-tools-loading" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,0.7); color:white; padding:20px; z-index:1000;">
+    Applying transformations... <div class="spinner"></div>
+</div>
 					</div>
 				</div>
 			</div>
